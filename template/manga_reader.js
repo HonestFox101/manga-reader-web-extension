@@ -25,7 +25,6 @@ const ReaderFactory = (() => {
             await this.registerEvent()
             await this.initialData()
             await this.firstRendering()
-            await this.initialUpscaler()
         }
 
         /**
@@ -178,7 +177,7 @@ const ReaderFactory = (() => {
             ) {
                 const src = this.imageSrcList[index]
                 if (!this.imageSrcBlobCacheMap.has(src)) {
-                    let resp = await fetch(src)
+                    let resp = await fetch(src, {mode: "no-cors", method: "get"})
                     let blob = await resp.blob()
                     this.imageSrcBlobCacheMap.set(src, blob)
                 }
@@ -219,52 +218,6 @@ const ReaderFactory = (() => {
         createOrGetReader() {
             if (!instance)
                 instance = new Reader()
-            return instance
-        }
-    }
-})()
-
-const UpscalerFactory = (()=>{
-    class Upscaler {
-        processQueue = []
-        url = "http://127.0.0.1:8000?upscale_ratio=2"
-
-        /**
-         * 测试
-         * @returns {Promise<Boolean>}
-         */
-        async test() {
-            let resp = await fetch(this.url).catch(err=>console.log(err))
-            return resp.ok
-        }
-
-        /**
-         * 放大图片
-         * @param {Blob} imgBlob 
-         * @returns {Blob} Blob of upscale image
-         */
-        async upscaleImage(imgBlob){
-            let resp = await fetch(this.url, {
-                method: "POST",
-                headers: {
-                    "Content-Type": imgBlob.type
-                },
-                body: imgBlob
-            })
-            return await resp.blob()
-        }
-    }
-
-    var instance = null;
-    return {
-        /**
-         * 
-         * @returns {Upscaler}
-         */
-        createOrgetUpscaler() {
-            if(!instance){
-                instance = new Upscaler()
-            }
             return instance
         }
     }
