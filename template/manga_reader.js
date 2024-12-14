@@ -1,5 +1,6 @@
 window.onload = () => {
-    ReaderFactory.createOrGetReader()
+    const reader = ReaderFactory.createOrGetReader()
+    Object.assign(self, {reader})
 }
 
 const ReaderFactory = (() => {
@@ -12,7 +13,6 @@ const ReaderFactory = (() => {
         preloadPageCount = 10
         imageSrcList = []
         imageSrcBlobCacheMap = new Map()
-        upscaler = UpscalerFactory.createOrgetUpscaler()
 
         constructor() {
             this.init()
@@ -54,16 +54,16 @@ const ReaderFactory = (() => {
          */
         async initialData() {
             while (this.pageCount == 0) {
-                this.pageCount = await Utils.getBackgroundData('page-count')
+                this.pageCount = (await Utils.getGlobalData('page-count')) || 0
                 await Utils.delay(.2)
             }
             while (this.episodeName == "") {
-                this.episodeName = await Utils.getBackgroundData("episode-name")
+                this.episodeName = (await Utils.getGlobalData("episode-name")) || ""
                 await Utils.delay(.2)
             }
             (async () => {
                 while (this.imageSrcList.length < this.pageCount) {
-                    this.imageSrcList = await Utils.getBackgroundData("image-src-list")
+                    this.imageSrcList = (await Utils.getGlobalData("image-src-list")) || []
                     await Utils.delay(.5)
                 }
             })()
@@ -84,18 +84,6 @@ const ReaderFactory = (() => {
             while (this.imageSrcList.length == 0)
                 await Utils.delay(.2)
             this.jumpTo(this.startPageIndex);
-        }
-
-        /**
-         * 初始化图片放大服务
-         */
-        async initialUpscaler() {
-            let flag = await this.upscaler.test()
-            if(!flag){
-                console.warn("Upscaler 服务未发现！")
-                return
-            }
-            // TODO 实现Upscaler服务
         }
 
         /**
@@ -212,7 +200,7 @@ const ReaderFactory = (() => {
     var instance = null;
     return {
         /**
-         * 
+         * 创建MangaReader单例
          * @returns {Reader}
          */
         createOrGetReader() {
@@ -248,16 +236,14 @@ const Utils = {
             }
         })
     },
-
+    
     /**
-     * 获取background.js的数据
-     * @param {string} name 
+     * 获取全局变量
+     * @param {string} key 
      * @returns
      */
-    async getBackgroundData(name) {
-        let reqeust = { action: `get-${name}` }
-        let resp = await chrome.runtime.sendMessage(reqeust)
-        // console.log(resp)
-        return resp
+    async getGlobalData(key) {
+        const dat = await chrome.storage.local.get(key)
+        return dat[key] || null
     },
 }

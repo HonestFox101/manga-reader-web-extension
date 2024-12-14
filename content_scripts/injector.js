@@ -129,11 +129,12 @@ const InjectorFactory = (() => {
         }
 
         async initialData() {
+            await Utils.clearGlobalStorage()
             this.pageCount = Number(document.querySelector("body > div:nth-child(2) > span.comicCount").innerText)
-            Utils.setBackgroundData("page-count", this.pageCount)
+            await Utils.setGlobalData("page-count", this.pageCount)
 
             this.episodeName = document.querySelector("body > h4").innerHTML.replace("/", "|")
-            Utils.setBackgroundData('episode-name', this.episodeName)
+            await Utils.setGlobalData('episode-name', this.episodeName)
 
             this.updateImageSrcListTask()
         }
@@ -153,7 +154,7 @@ const InjectorFactory = (() => {
                 this.imageSrcList.push(img.getAttribute("data-src"))
             }
 
-            await Utils.setBackgroundData('image-src-list', this.imageSrcList)
+            await Utils.setGlobalData('image-src-list', this.imageSrcList)
 
             await Utils.delay(0.5 + Math.random())
             this.updateImageSrcListTask()
@@ -179,19 +180,21 @@ const InjectorFactory = (() => {
         }
 
         async initialData() {
+            await Utils.clearGlobalStorage()
+
             this.pageCount = document.querySelector("#page_select").options.length
-            Utils.setBackgroundData("page-count", this.pageCount)
+            Utils.setGlobalData("page-count", this.pageCount)
 
             this.episodeName = document.querySelector("body > div:nth-child(8) > div.display_middle > h1 > a").innerHTML
                 + "|"
                 + document.querySelector("body > div:nth-child(8) > div.display_middle > span").innerHTML
-            Utils.setBackgroundData('episode-name', this.episodeName)
+            Utils.setGlobalData('episode-name', this.episodeName)
 
             this.imageSrcList = []
             for (const option of document.querySelector("#page_select").options) {
                 this.imageSrcList.push("https:" + option.value)
             }
-            Utils.setBackgroundData('image-src-list', this.imageSrcList)
+            Utils.setGlobalData('image-src-list', this.imageSrcList)
         }
     }
 
@@ -214,23 +217,22 @@ const Utils = {
     delay(seconds) {
         return new Promise(resolve => setTimeout(resolve, seconds * 1000));
     },
-    getNaturalSize(src) {
-        return new Promise(resolve => {
-            let img = new Image()
-            img.src = src
-            img.onload = () => {
-                let size = { width: img.naturalWidth, height: img.naturalHeight }
-                resolve(size)
-            }
-        })
-    },
     randint(start, size) {
         return start + Math.floor(Math.random() * size)
     },
-    async setBackgroundData(dataName, value) {
-        let request = { action: `set-${dataName}`, data: value }
-        let resp = await chrome.runtime.sendMessage(request)
-        // console.log(resp)
-        return resp
+    /**
+     * 清理全局变量
+     */
+    async clearGlobalStorage() {
+        await chrome.storage.local.clear()
+    },
+    /**
+     * 设置全局变量
+     * @param {string} key 
+     * @param {*} value
+     * @returns 
+     */
+    async setGlobalData(key, value) {
+        await chrome.storage.local.set({[key]: value})
     }
 }
