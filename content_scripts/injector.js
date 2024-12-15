@@ -129,7 +129,7 @@ const InjectorFactory = (() => {
         }
 
         async initialData() {
-            await Utils.clearGlobalStorage()
+            await Utils.removeGlobalData("page-count", "episode-name", "image-src-list")
             this.pageCount = Number(document.querySelector("body > div:nth-child(2) > span.comicCount").innerText)
             await Utils.setGlobalData("page-count", this.pageCount)
 
@@ -180,7 +180,7 @@ const InjectorFactory = (() => {
         }
 
         async initialData() {
-            await Utils.clearGlobalStorage()
+            await Utils.removeGlobalData()
 
             this.pageCount = document.querySelector("#page_select").options.length
             Utils.setGlobalData("page-count", this.pageCount)
@@ -222,9 +222,10 @@ const Utils = {
     },
     /**
      * 清理全局变量
+     * @param  {...string} values 
      */
-    async clearGlobalStorage() {
-        await chrome.storage.local.clear()
+    async removeGlobalData(...values) {
+        await chrome.storage.local.remove(values)
     },
     /**
      * 设置全局变量
