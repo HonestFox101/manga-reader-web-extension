@@ -122,12 +122,16 @@ const ReaderFactory = (() => {
          */
         async jumpTo(index) {
             this.preloadImageTask(index)
-            if (index >= this.imageSrcList.length || index >= this.pageCount || index < 0)
+            if (index >= Math.min(this.imageSrcList.length, this.pageCount) || index < 0)
                 return
             this.startPageIndex = index
             
             let src1 = this.imageSrcList[index]
-            
+            if(this.imageSrcBlobCacheMap.has(src1)){
+                let blob = this.imageSrcBlobCacheMap.get(src1)
+                src1 = URL.createObjectURL(blob)
+            }
+
             this.clearImage()
             this.renderImage(src1)
 
@@ -137,6 +141,10 @@ const ReaderFactory = (() => {
                 document.querySelector(".page-index").innerHTML = this.startPageIndex + 1
             } else {
                 let src2 = this.imageSrcList[index + 1]
+                if(this.imageSrcBlobCacheMap.has(src2)){
+                    let blob = this.imageSrcBlobCacheMap.get(src2)
+                    src2 = URL.createObjectURL(blob)
+                }
 
                 let size2 = await Utils.getNaturalSize(src2)
                 if (size2.width > size2.height) {
@@ -152,15 +160,15 @@ const ReaderFactory = (() => {
 
         /**
          * 预加载从初始索引开始接下去的n张图片（n == this.preloadPageCount)
-         * @param {int} startIndex 初始索引
+         * @param {int} initial 初始索引
          * @returns 
          */
-        async preloadImageTask(startIndex = 0) {
-            if (startIndex < 0)
+        async preloadImageTask(initial = 0) {
+            if (initial < 0)
                 return
             for (
-                let index = startIndex;
-                index < this.imageSrcList.length && index < startIndex + 1 + this.preloadPageCount;
+                let index = initial;
+                index < Math.min(initial + 1 + this.preloadPageCount, this.imageSrcList.length);
                 index++
             ) {
                 const src = this.imageSrcList[index]
@@ -178,10 +186,6 @@ const ReaderFactory = (() => {
          * @param {0|1} pos 0为页1，1为页2。
          */
         renderImage(src, pos = 0) {
-            if(this.imageSrcBlobCacheMap.has(src)){
-                let blob = this.imageSrcBlobCacheMap.get(src)
-                src = URL.createObjectURL(blob)
-            }
             let page1 = document.querySelector('.page1');
             let page2 = document.querySelector('.page2');
             page1.style.maxWidth = pos == 0 ? "100vw" : "50vw";
