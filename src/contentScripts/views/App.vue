@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { useToggle } from "@vueuse/core";
+import { useTemplateRefsList, useToggle } from "@vueuse/core";
 import { ref, onMounted } from "vue";
 import { MangaMeta } from "../manga";
 import { getImageSizeFromBlob } from "~/utils";
-import { fetchCors } from "../fetchCors.mjs";
 
 const props = defineProps<{
   mangaMeta: MangaMeta;
@@ -11,25 +10,31 @@ const props = defineProps<{
 
 onMounted(async () => {
   Object.assign(self, { mangaMeta: props.mangaMeta });
-  Object.assign(self, { fetchCors });
+  await jumpTo(0);
   toggleMangaReader(true);
-  currentPagesIndex.value.forEach(async (i) => {
-    const blob = await props.mangaMeta.loadImage(i);
-    const size = await getImageSizeFromBlob(blob!);
-    props.mangaMeta.pages[i].cachBlob = blob!;
-    props.mangaMeta.pages[i].size = size;
-  });
 });
 
-const currentPagesIndex = ref<[number, number]>([0, 1]);
+const currentPagesIndex = ref<[number, number]>([0, 0]);
 const currentPages = computed(() => {
   const [p1i, p2i] = currentPagesIndex.value;
   const pages = props.mangaMeta.pages;
   return p1i !== p2i ? [pages[p1i], pages[p2i]] : [pages[p1i]];
 });
+const pageRefs = useTemplateRefsList<HTMLImageElement>();
+watch([currentPages], async ([pages]) => {
+  for (let i = 0; i < pages.length; i++) {
+    const page = pages[i];
+    const img = pageRefs.value[i];
+    if ("src" in img) URL.revokeObjectURL(img.src);
+    img.src = page.cachBlob ? URL.createObjectURL(page.cachBlob) : page.url;
+  }
+});
 const [showMangaReader, toggleMangaReader] = useToggle(false);
 const [showMenu, toggleMenu] = useToggle(false);
 
+/**
+ * 跳转到指定页
+ */
 const jumpTo = async (index: number) => {
   if (index < 0 || index >= props.mangaMeta.pageCount) {
     index = Math.max(0, Math.min(index, props.mangaMeta.pageCount - 1));
@@ -42,6 +47,26 @@ const jumpTo = async (index: number) => {
       currentPagesIndex.value = [index, index];
     }
   }
+  preloadImages(...Array.from({ length: 10 }, (_, i) => i + index)); // 预加载图片
+};
+
+/**
+ * 预加载图片
+ */
+const preloadImages = async (...indexes: number[]) => {
+  indexes = indexes.filter(
+    (i) =>
+      i >= 0 &&
+      i < props.mangaMeta.pages.length &&
+      !props.mangaMeta.pages[i].cachBlob
+  );
+  for (const i of indexes) {
+    const blob = await props.mangaMeta.loadImage(i);
+    const size = await getImageSizeFromBlob(blob!);
+    props.mangaMeta.pages[i].cachBlob = blob!;
+    props.mangaMeta.pages[i].size = size;
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
 };
 </script>
 
@@ -53,7 +78,12 @@ const jumpTo = async (index: number) => {
     >
       <div class="background-panel layer"></div>
       <div class="display-panel layer">
-        <img v-for="page in currentPages" class="page" :src="page.url" alt="" />
+        <img
+          v-for="(_, i) in currentPages"
+          :key="i"
+          :ref="pageRefs.set"
+          class="page"
+        />
         <!-- <img class="page" src="/assets/template/1.webp" alt="" />
         <img class="page" src="/assets/template/2.webp" alt="" /> -->
       </div>
@@ -62,15 +92,9 @@ const jumpTo = async (index: number) => {
           <span>{{ mangaMeta.episodeName }}</span>
         </div>
         <div class="action-surface">
-          <div
-            class="go-left"
-            @click="jumpTo(currentPagesIndex[1] + 1)"
-          ></div>
+          <div class="go-left" @click="jumpTo(currentPagesIndex[1] + 1)"></div>
           <div @click="toggleMenu()"></div>
-          <div
-            class="go-right"
-            @click="jumpTo(currentPagesIndex[0] - 2)"
-          ></div>
+          <div class="go-right" @click="jumpTo(currentPagesIndex[0] - 2)"></div>
         </div>
         <div class="footer-bar menu-bar">
           <span
