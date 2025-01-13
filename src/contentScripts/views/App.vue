@@ -23,16 +23,26 @@ onMounted(async () => {
 
 const currentPagesIndex = ref<[number, number]>([0, 1]);
 const currentPages = computed(() => {
+  const [p1i, p2i] = currentPagesIndex.value;
   const pages = props.mangaMeta.pages;
-  const pagePair = [
-    pages[currentPagesIndex.value[0]],
-    pages[currentPagesIndex.value[1]],
-  ];
-  currentPagesIndex.value[0] === currentPagesIndex.value[1] && pagePair.pop();
-  return pagePair;
+  return p1i !== p2i ? [pages[p1i], pages[p2i]] : [pages[p1i]];
 });
 const [showMangaReader, toggleMangaReader] = useToggle(false);
 const [showMenu, toggleMenu] = useToggle(false);
+
+const jumpTo = async (index: number) => {
+  if (index < 0 || index >= props.mangaMeta.pageCount) {
+    index = Math.max(0, Math.min(index, props.mangaMeta.pageCount - 1));
+  }
+  if (index < props.mangaMeta.pages.length - 1) {
+    currentPagesIndex.value = [index, index + 1];
+  }
+  if (index === props.mangaMeta.pages.length - 1) {
+    if (props.mangaMeta.loaded) {
+      currentPagesIndex.value = [index, index];
+    }
+  }
+};
 </script>
 
 <template>
@@ -52,9 +62,15 @@ const [showMenu, toggleMenu] = useToggle(false);
           <span>{{ mangaMeta.episodeName }}</span>
         </div>
         <div class="action-surface">
-          <div class="go-left"></div>
+          <div
+            class="go-left"
+            @click="jumpTo(currentPagesIndex[1] + 1)"
+          ></div>
           <div @click="toggleMenu()"></div>
-          <div class="go-right"></div>
+          <div
+            class="go-right"
+            @click="jumpTo(currentPagesIndex[0] - 2)"
+          ></div>
         </div>
         <div class="footer-bar menu-bar">
           <span
@@ -62,7 +78,11 @@ const [showMenu, toggleMenu] = useToggle(false);
               currentPagesIndex[0] === currentPagesIndex[1]
                 ? currentPagesIndex[0] + 1
                 : currentPagesIndex.map((i) => i + 1).join("-")
-            }}/{{ mangaMeta.pageCount }}
+            }}/{{
+              mangaMeta.loaded
+                ? `${mangaMeta.pageCount}`
+                : `${mangaMeta.pages.length}(${mangaMeta.pageCount})`
+            }}
           </span>
         </div>
       </div>
