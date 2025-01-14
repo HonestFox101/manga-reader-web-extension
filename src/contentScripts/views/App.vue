@@ -17,7 +17,6 @@ const toggleShow = (value?: boolean) => {
 };
 
 onMounted(async () => {
-  Object.assign(self, { mangaWorker: props.mangaWorker });
   // 监听漫画页更新事件，漫画图片替换加载图片
   props.mangaWorker.events.on("pageUpdated", async (pages) =>
     pageRefs.value.forEach(async (element) => {
@@ -77,7 +76,7 @@ async function jumpTo(index: number | "next" | "prev") {
         ? currentPageIndex.value[1] + 1
         : currentPageIndex.value + 1,
       prev: Array.isArray(currentPageIndex.value)
-        ? currentPageIndex.value[0] - 1
+        ? currentPageIndex.value[0] - 2
         : currentPageIndex.value - 1,
     }[index] as number;
   }
@@ -153,6 +152,12 @@ async function renderImage(
         </div>
         <div class="footer-bar menu-bar">
           <span
+            class="change-episode-button"
+            :class="mangaWorker.goToNextEpisode ? '' : 'disable'"
+            @click="mangaWorker.goToNextEpisode && mangaWorker.goToNextEpisode()"
+            ><uil-arrow-left class="action-icon"
+          /></span>
+          <span
             >{{
               typeof currentPageIndex === "number"
                 ? currentPageIndex + 1
@@ -163,14 +168,20 @@ async function renderImage(
                 : `${mangaWorker.pages.length}(${mangaWorker.pageCount})`
             }}
           </span>
+          <span
+            class="change-episode-button"
+            :class="mangaWorker.goToPrevEpisode ? '' : 'disable'"
+            @click="mangaWorker.goToPrevEpisode && mangaWorker.goToPrevEpisode()"
+            ><uil-arrow-right class="action-icon"
+          /></span>
         </div>
       </div>
     </div>
-    <div class="switch-button">
+    <a class="switch-button-box" title="切换显示">
       <button @click="toggleShow()">
         <uil-book-open class="logo" />
       </button>
-    </div>
+    </a>
   </div>
 </template>
 
@@ -182,7 +193,7 @@ $menu-bar-height: 75px;
   color: white;
   font-size: 22px;
 
-  .switch-button {
+  .switch-button-box {
     position: fixed;
     bottom: 10px;
     right: 10px;
@@ -275,8 +286,17 @@ $menu-bar-height: 75px;
       .footer-bar {
         display: flex;
         flex-flow: row nowrap;
-        justify-content: center;
+        justify-content: space-around;
         align-items: center;
+
+        .change-episode-button:not(.disable) {
+          cursor: pointer;
+        }
+
+        .action-icon {
+          width: 50px;
+          height: 50px;
+        }
       }
     }
 
@@ -314,5 +334,10 @@ $menu-bar-height: 75px;
 
 .hidden {
   display: none;
+}
+
+.disable {
+  cursor: not-allowed;
+  opacity: 0.3;
 }
 </style>

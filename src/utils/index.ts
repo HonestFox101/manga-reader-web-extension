@@ -15,14 +15,29 @@ type RunOnBackgroundParams<R, P extends unknown[]> = {
  * 在某个网页执行代码，通常用于操控DOM元素
  */
 export async function executeOnWebpage<R, P extends unknown[]>(
+  func: (...args: P) => R | Promise<R>,
+  args?: P
+): Promise<R | null>;
+export async function executeOnWebpage<R, P extends unknown[]>(
   params: RunOnContentScriptParams<R, P>
 ): Promise<R | null>;
 export async function executeOnWebpage<R, P extends unknown[]>(
   params: RunOnBackgroundParams<R, P>
 ): Promise<R | null>;
 export async function executeOnWebpage<R, P extends unknown[]>(
-  params: RunOnContentScriptParams<R, P> | RunOnBackgroundParams<R, P>
+  params:
+    | RunOnContentScriptParams<R, P>
+    | RunOnBackgroundParams<R, P>
+    | (() => Promise<void>),
+  args?: P
 ): Promise<R | null> {
+  if (typeof params === "function") {
+    params = {
+      env: "content script",
+      args: typeof args === "undefined" ? [] : args,
+      func: params,
+    } as RunOnContentScriptParams<R, P> | RunOnBackgroundParams<R, P>;
+  }
   params = { env: "content script", args: [] as unknown as P, ...params };
   let res: R | null = null;
   if (params.env === "background" && params.tabId) {

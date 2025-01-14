@@ -42,7 +42,7 @@ const mountApp = (mangaWorker: object) => {
     const reader = mangaWorker && mountApp(mangaWorker);
     if (reader) {
       mangaWorker.bindReaderChannel(reader.channel);
-      Object.assign(self, { mangaReader: reader });
+      Object.assign(self, { mangaReader: reader, mangaWorker: mangaWorker });
     }
   });
 })();
