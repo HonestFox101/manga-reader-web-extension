@@ -6,16 +6,32 @@ export interface Page {
   cachBlob?: Blob;
 }
 
-export type MangaMetaEvent = { pageChanged: Page[] };
+export type MangaWebPageWorkerEvent = {
+  pageUpdated: Page[];
+  pageLoaded: { page: Page; index: number };
+};
 
-export interface MangaMeta {
+export interface MangaWebPageWorker {
   readonly pages: Page[];
   readonly pageCount: number;
-  readonly loaded: boolean;
   readonly episodeName: string;
+
+  readonly loaded: boolean;
   readonly events: Pick<
-    Emittery<MangaMetaEvent>,
+    Emittery<MangaWebPageWorkerEvent>,
     "on" | "off" | "once" | "emit"
   >;
-  readonly loadImage: (pageIndex: number) => Promise<Blob | null>;
+
+  readonly loadImage: (pageIndex: number) => Promise<Page>;
+  readonly bindReaderChannel: (chan: MangaReaderChannel) => void;
 }
+
+export type MangaReaderEvent = {
+  jump: number | [number, number];
+  mangaReaderToggled: boolean;
+};
+
+export type MangaReaderChannel = Pick<
+  Emittery<MangaReaderEvent>,
+  "on" | "off" | "once" | "emit"
+>;

@@ -1,9 +1,14 @@
 import Emittery from "emittery";
-import { MangaMeta, Page } from "./manga";
-import { base64ToBlob, executeOnWebpage } from "~/utils";
+import {
+  MangaReaderChannel,
+  MangaWebPageWorker,
+  MangaWebPageWorkerEvent,
+  Page,
+} from "./manga";
+import { base64ToBlob, executeOnWebpage, getImageSizeFromBlob } from "~/utils";
 import { fetchCors } from "./fetchCors.mjs";
 
-class CopyMangaMeta implements MangaMeta {
+class CopyMangaWorker implements MangaWebPageWorker {
   public static readonly matchPattern =
     /^https?:\/\/(copymanga\.tv|mangacopy\.com)\/comic\/\w+\/chapter\/[\w-]+$/g;
   public readonly pageCount;
@@ -13,31 +18,50 @@ class CopyMangaMeta implements MangaMeta {
     return this.pages.length === this.pageCount;
   }
   public get events() {
-    return this.emitter;
+    return this._emitter;
   }
 
-  private readonly emitter = new Emittery<{ pageChanged: Page[] }>();
+  private readonly _emitter = new Emittery<MangaWebPageWorkerEvent>();
 
   private constructor(pageCount: number, episodeName: string) {
     this.pageCount = pageCount;
     this.episodeName = episodeName;
   }
 
-  public async loadImage(pageIndex: number): Promise<Blob | null> {
+  public async loadImage(pageIndex: number): Promise<Page> {
+    if (this.pages[pageIndex].cachBlob) return this.pages[pageIndex];
     const page = this.pages[pageIndex];
     const base64 = await fetchCors(page.url, "base64");
-    return base64ToBlob(base64, "image/webp");
+    this.pages[pageIndex].cachBlob = base64ToBlob(base64, "image/webp");
+    this.pages[pageIndex].size = await getImageSizeFromBlob(
+      this.pages[pageIndex].cachBlob
+    );
+    this.events.emit("pageLoaded", {
+      page: this.pages[pageIndex],
+      index: pageIndex,
+    });
+    return this.pages[pageIndex];
+  }
+
+  public bindReaderChannel(channel: MangaReaderChannel): void {
+    channel.on("mangaReaderToggled", (val) => {
+      executeOnWebpage({
+        func: (val) => {
+          document.querySelector<HTMLDivElement>(
+            "body > h4.header"
+          )!.style.display = val ? "none" : "";
+        },
+        args: [val],
+      });
+    });
   }
 
   /**
    * meta数据初始化，从DOM中获取信息
    */
-  public static async build(): Promise<MangaMeta> {
+  public static async build(): Promise<MangaWebPageWorker> {
     const [total, episodeName] = (await executeOnWebpage({
       func: () => {
-        document.querySelector<HTMLDivElement>(
-          "body > h4.header"
-        )!.style.display = "none";
         return [
           parseInt(
             document.querySelector<HTMLSpanElement>(
@@ -46,12 +70,12 @@ class CopyMangaMeta implements MangaMeta {
           ) as number,
           document
             .querySelector<HTMLDivElement>("body > h4")!
-            .innerHTML.replace("/", "|") as string,
+            .innerHTML.replace("/", " | ") as string,
         ];
       },
     }))!;
-    const initMeta = new CopyMangaMeta(total, episodeName).init();
-    return initMeta as MangaMeta;
+    const initMeta = new CopyMangaWorker(total, episodeName).init();
+    return initMeta as MangaWebPageWorker;
   }
 
   public init() {
@@ -86,7 +110,7 @@ class CopyMangaMeta implements MangaMeta {
     for (let i = this.pages.length; i < imgUrls.length; i++) {
       this.pages.push({ url: imgUrls[i] });
     }
-    this.events.emit("pageChanged", this.pages);
+    this.events.emit("pageUpdated", this.pages);
     if (!this.loaded) {
       await new Promise((resolve) => setTimeout(resolve, 500));
       this.updatePage();
@@ -97,11 +121,11 @@ class CopyMangaMeta implements MangaMeta {
 export default class WebsiteInjector {
   private constructor() {}
 
-  public static async inject(): Promise<{ mangaMeta?: MangaMeta }> {
+  public static async inject(): Promise<{ mangaWorker?: MangaWebPageWorker }> {
     const res = {};
-    if (self.location.href.match(CopyMangaMeta.matchPattern)) {
-      const mangaMeta = await CopyMangaMeta.build();
-      Object.assign(res, { mangaMeta });
+    if (self.location.href.match(CopyMangaWorker.matchPattern)) {
+      const mangaWorker = await CopyMangaWorker.build();
+      Object.assign(res, { mangaWorker });
     }
     return res;
   }

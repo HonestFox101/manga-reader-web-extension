@@ -6,7 +6,7 @@
     target="_blank"
     title="GitHub"
   >
-    <pixelarticons-power width="3rem" height="3rem"/>
+    <uil-book-open width="3rem" height="3rem"/>
   </a>
 </template>
 

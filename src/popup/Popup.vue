@@ -18,8 +18,8 @@ function openOptionsPage() {
 
 <style lang="scss" scoped>
 .popup {
-  min-width: 400px;
-  min-height: 360px;
+  min-width: 250px;
+  min-height: 200px;
   padding: 1rem;
   display: flex;
   flex-direction: column;

@@ -67,6 +67,7 @@ onMessage("get-current-tab", async () => {
   }
 });
 
+// 在Service Worker调用fetch，解决跨域问题
 onMessage("just-cors", async (message) => {
   const { data } = message;
   const response = await fetch(data.url, {

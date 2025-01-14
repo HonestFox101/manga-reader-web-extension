@@ -4,8 +4,10 @@ import { createApp } from "vue";
 import App from "./views/App.vue";
 import { setupApp } from "~/logic/common-setup";
 import WebsiteInjector from "./websiteInjector.mjs";
+import Emittery from "emittery";
+import type { MangaReaderEvent } from "./manga";
 
-const mountApp = (mangaMeta: object) => {
+const mountApp = (mangaWorker: object) => {
   // communication example: send previous tab title from background page
   onMessage("tab-prev", ({ data }) => {
     console.log(`[vitesse-webext] Navigate from page "${data.title}"`);
@@ -27,14 +29,20 @@ const mountApp = (mangaMeta: object) => {
   shadowDOM.appendChild(styleEl);
   shadowDOM.appendChild(root);
   document.body.appendChild(container);
-  const app = createApp(App, { mangaMeta });
+  const channel = new Emittery<MangaReaderEvent>();
+  const app = createApp(App, { mangaWorker, channel });
   setupApp(app);
   app.mount(root);
+  return { app, channel };
 };
 
 // Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
 (() => {
-  WebsiteInjector.inject().then(({ mangaMeta }) => {
-    mangaMeta && mountApp(mangaMeta);
+  WebsiteInjector.inject().then(({ mangaWorker }) => {
+    const reader = mangaWorker && mountApp(mangaWorker);
+    if (reader) {
+      mangaWorker.bindReaderChannel(reader.channel);
+      Object.assign(self, { mangaReader: reader });
+    }
   });
 })();

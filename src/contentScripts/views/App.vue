@@ -1,81 +1,136 @@
 <script setup lang="ts">
 import { useTemplateRefsList, useToggle } from "@vueuse/core";
 import { ref, onMounted } from "vue";
-import { MangaMeta } from "../manga";
-import { getImageSizeFromBlob } from "~/utils";
+import { MangaWebPageWorker, MangaReaderChannel, Page } from "../manga";
+
+const loadingImageUrl = browser.runtime.getURL("/assets/loading.png");
 
 const props = defineProps<{
-  mangaMeta: MangaMeta;
+  mangaWorker: MangaWebPageWorker;
+  channel?: MangaReaderChannel;
 }>();
 
+const show = defineModel<boolean>({ default: false });
+const toggleShow = (value?: boolean) => {
+  show.value = typeof value === "undefined" ? !show.value : value;
+  props.channel?.emit("mangaReaderToggled", show.value);
+};
+
 onMounted(async () => {
-  Object.assign(self, { mangaMeta: props.mangaMeta });
+  Object.assign(self, { mangaWorker: props.mangaWorker });
+  // 监听漫画页更新事件，漫画图片替换加载图片
+  props.mangaWorker.events.on("pageUpdated", async (pages) =>
+    pageRefs.value.forEach(async (element) => {
+      if (element.getAttribute("src") && element.src === loadingImageUrl) {
+        const targetIndex = pages.findIndex((_, i) =>
+          element.classList.contains(`page-${i}`)
+        );
+        if (targetIndex !== -1) {
+          await renderImage(
+            { ...pages[targetIndex], index: targetIndex },
+            element
+          );
+        }
+      }
+    })
+  );
   await jumpTo(0);
-  toggleMangaReader(true);
+  toggleShow(true);
 });
 
-const currentPagesIndex = ref<[number, number]>([0, 0]);
-const currentPages = computed(() => {
-  const [p1i, p2i] = currentPagesIndex.value;
-  const pages = props.mangaMeta.pages;
-  return p1i !== p2i ? [pages[p1i], pages[p2i]] : [pages[p1i]];
-});
+const currentPageIndex = ref<number | [number, number]>(0);
+
 const pageRefs = useTemplateRefsList<HTMLImageElement>();
-watch([currentPages], async ([pages]) => {
-  for (let i = 0; i < pages.length; i++) {
-    const page = pages[i];
-    const img = pageRefs.value[i];
-    if ("src" in img) URL.revokeObjectURL(img.src);
-    img.src = page.cachBlob ? URL.createObjectURL(page.cachBlob) : page.url;
-  }
+
+const currentPages = computed(() => {
+  const indexes = Array.isArray(currentPageIndex.value)
+    ? currentPageIndex.value
+    : [currentPageIndex.value];
+  const pages: (Page & { index: number })[] = indexes.map((i) => {
+    const pages = props.mangaWorker.pages;
+    if (i >= pages.length) {
+      return { url: loadingImageUrl };
+    }
+    return { ...pages[i], index: i } as any;
+  });
+  nextTick().then(() => {
+    for (let i = 0; i < pageRefs.value.length; i++) {
+      const page = pages[i];
+      const element = pageRefs.value[i];
+      renderImage(page, element);
+    }
+  });
+  return pages;
 });
-const [showMangaReader, toggleMangaReader] = useToggle(false);
+
 const [showMenu, toggleMenu] = useToggle(false);
 
 /**
  * 跳转到指定页
  */
-const jumpTo = async (index: number) => {
-  if (index < 0 || index >= props.mangaMeta.pageCount) {
-    index = Math.max(0, Math.min(index, props.mangaMeta.pageCount - 1));
+async function jumpTo(index: number): Promise<void>;
+async function jumpTo(action: "next" | "prev"): Promise<void>;
+async function jumpTo(index: number | "next" | "prev") {
+  if (typeof index === "string") {
+    index = {
+      next: Array.isArray(currentPageIndex.value)
+        ? currentPageIndex.value[1] + 1
+        : currentPageIndex.value + 1,
+      prev: Array.isArray(currentPageIndex.value)
+        ? currentPageIndex.value[0] - 1
+        : currentPageIndex.value - 1,
+    }[index] as number;
   }
-  if (index < props.mangaMeta.pages.length - 1) {
-    currentPagesIndex.value = [index, index + 1];
+  if (index < 0 || index >= props.mangaWorker.pageCount) {
+    index = Math.max(0, Math.min(index, props.mangaWorker.pageCount - 1));
   }
-  if (index === props.mangaMeta.pages.length - 1) {
-    if (props.mangaMeta.loaded) {
-      currentPagesIndex.value = [index, index];
-    }
+  if (index < props.mangaWorker.pageCount - 1) {
+    currentPageIndex.value = [index, index + 1];
+  } else if (index === props.mangaWorker.pageCount - 1) {
+    currentPageIndex.value = index;
   }
-  preloadImages(...Array.from({ length: 10 }, (_, i) => i + index)); // 预加载图片
-};
+  props.channel?.emit("jump", currentPageIndex.value);
+  preloadImages(...Array.from({ length: 10 }, (_, i) => i + index)); // 根据跳转到的页面预加载图片
+}
 
 /**
  * 预加载图片
  */
-const preloadImages = async (...indexes: number[]) => {
+async function preloadImages(...indexes: number[]) {
   indexes = indexes.filter(
     (i) =>
       i >= 0 &&
-      i < props.mangaMeta.pages.length &&
-      !props.mangaMeta.pages[i].cachBlob
+      i < props.mangaWorker.pages.length &&
+      !props.mangaWorker.pages[i].cachBlob
   );
   for (const i of indexes) {
-    const blob = await props.mangaMeta.loadImage(i);
-    const size = await getImageSizeFromBlob(blob!);
-    props.mangaMeta.pages[i].cachBlob = blob!;
-    props.mangaMeta.pages[i].size = size;
+    await props.mangaWorker.loadImage(i);
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
-};
+}
+
+/**
+ * 渲染漫画图片
+ */
+async function renderImage(
+  page: Page & { index: number },
+  element: HTMLImageElement
+) {
+  element.getAttribute("src") && URL.revokeObjectURL(element.src); // 清除图片缓存
+  element.classList.remove(
+    ...Array.from(element.classList).filter((c) => c.startsWith("page-"))
+  );
+  element.classList.add(`page-${page.index}`);
+  return new Promise<void>((resolve) => {
+    element.onload = () => resolve();
+    element.src = page.cachBlob ? URL.createObjectURL(page.cachBlob) : page.url;
+  });
+}
 </script>
 
 <template>
   <div class="injected-content">
-    <div
-      class="manga-reader-container"
-      :class="showMangaReader ? '' : 'hidden'"
-    >
+    <div class="manga-reader-container" :class="show ? '' : 'hidden'">
       <div class="background-panel layer"></div>
       <div class="display-panel layer">
         <img
@@ -89,31 +144,31 @@ const preloadImages = async (...indexes: number[]) => {
       </div>
       <div class="operation-panel layer" :class="showMenu ? 'show-menu' : ''">
         <div class="header-bar menu-bar">
-          <span>{{ mangaMeta.episodeName }}</span>
+          <span>{{ mangaWorker.episodeName }}</span>
         </div>
         <div class="action-surface">
-          <div class="go-left" @click="jumpTo(currentPagesIndex[1] + 1)"></div>
+          <div class="go-left" @click="jumpTo('next')"></div>
           <div @click="toggleMenu()"></div>
-          <div class="go-right" @click="jumpTo(currentPagesIndex[0] - 2)"></div>
+          <div class="go-right" @click="jumpTo('prev')"></div>
         </div>
         <div class="footer-bar menu-bar">
           <span
             >{{
-              currentPagesIndex[0] === currentPagesIndex[1]
-                ? currentPagesIndex[0] + 1
-                : currentPagesIndex.map((i) => i + 1).join("-")
+              typeof currentPageIndex === "number"
+                ? currentPageIndex + 1
+                : currentPageIndex.map((i) => i + 1).join("-")
             }}/{{
-              mangaMeta.loaded
-                ? `${mangaMeta.pageCount}`
-                : `${mangaMeta.pages.length}(${mangaMeta.pageCount})`
+              mangaWorker.loaded
+                ? `${mangaWorker.pageCount}`
+                : `${mangaWorker.pages.length}(${mangaWorker.pageCount})`
             }}
           </span>
         </div>
       </div>
     </div>
     <div class="switch-button">
-      <button @click="toggleMangaReader()">
-        <pixelarticons-power />
+      <button @click="toggleShow()">
+        <uil-book-open class="logo" />
       </button>
     </div>
   </div>
@@ -126,11 +181,28 @@ $menu-bar-height: 75px;
 .injected-content {
   color: white;
   font-size: 22px;
+
   .switch-button {
     position: fixed;
     bottom: 10px;
     right: 10px;
     z-index: $base-z-index + 10;
+    opacity: 60%;
+
+    &:hover {
+      opacity: 100%;
+    }
+
+    button {
+      border-radius: 10px;
+      padding: 1em;
+      text-align: center;
+    }
+
+    .logo {
+      width: 1.2rem;
+      height: 1.2rem;
+    }
   }
 }
 
@@ -238,12 +310,6 @@ $menu-bar-height: 75px;
       background-color: #000000c4;
     }
   }
-}
-
-button {
-  border-radius: 0.5rem;
-  padding: 0.5rem;
-  text-align: center;
 }
 
 .hidden {

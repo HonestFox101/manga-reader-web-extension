@@ -1,10 +1,10 @@
-type RunOnContentScriptOptions<R, P extends unknown[]> = {
+type RunOnContentScriptParams<R, P extends unknown[]> = {
   func: (...args: P) => R | Promise<R>;
   env?: "content script";
   args?: P;
 };
 
-type RunOnBackgroundOptions<R, P extends unknown[]> = {
+type RunOnBackgroundParams<R, P extends unknown[]> = {
   func: (...args: P) => R | Promise<R>;
   env: "background";
   tabId: number;
@@ -15,28 +15,28 @@ type RunOnBackgroundOptions<R, P extends unknown[]> = {
  * 在某个网页执行代码，通常用于操控DOM元素
  */
 export async function executeOnWebpage<R, P extends unknown[]>(
-  options: RunOnContentScriptOptions<R, P>
+  params: RunOnContentScriptParams<R, P>
 ): Promise<R | null>;
 export async function executeOnWebpage<R, P extends unknown[]>(
-  options: RunOnBackgroundOptions<R, P>
+  params: RunOnBackgroundParams<R, P>
 ): Promise<R | null>;
 export async function executeOnWebpage<R, P extends unknown[]>(
-  options: RunOnContentScriptOptions<R, P> | RunOnBackgroundOptions<R, P>
+  params: RunOnContentScriptParams<R, P> | RunOnBackgroundParams<R, P>
 ): Promise<R | null> {
-  options = { env: "content script", args: [] as unknown as P, ...options };
+  params = { env: "content script", args: [] as unknown as P, ...params };
   let res: R | null = null;
-  if (options.env === "background" && options.tabId) {
+  if (params.env === "background" && params.tabId) {
     const injectResults = await browser.scripting.executeScript({
-      func: options.func,
-      args: options.args,
-      target: { tabId: options.tabId },
+      func: params.func,
+      args: params.args,
+      target: { tabId: params.tabId },
     });
     const injectResult = injectResults.pop()!;
     if (!injectResult.error) {
       res = injectResults.pop()!.result as R;
     }
   } else {
-    res = await options.func(...(options.args as P));
+    res = await params.func(...(params.args as P));
   }
   return res;
 }

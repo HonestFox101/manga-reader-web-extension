@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import logo from "~/assets/logo.svg";
 import { storageDemo } from "~/logic/storage";
 </script>
 
 <template>
   <main class="option-page">
-    <img :src="logo" class="" alt="extension icon" />
     <div class="title">Options Page</div>
     <SharedSubtitle />
     <input v-model="storageDemo" class="input-field" />

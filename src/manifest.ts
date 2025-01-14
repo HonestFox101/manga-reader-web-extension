@@ -11,6 +11,7 @@ export async function getManifest() {
   const manifest: Manifest.WebExtensionManifest = {
     manifest_version: 3,
     name: pkg.displayName || pkg.name,
+    author: pkg.author,
     version: pkg.version,
     description: pkg.description,
     action: {
@@ -33,7 +34,13 @@ export async function getManifest() {
       16: "./assets/icons8-manga-48.png",
       48: "./assets/icons8-manga-48.png",
     },
-    permissions: ["tabs", "storage", "activeTab", "sidePanel", "scripting"],
+    permissions: [
+      "tabs",
+      "storage",
+      "activeTab",
+      "sidePanel",
+      "scripting",
+    ].concat(isDev ? ["webNavigation"] : []),
     host_permissions: ["*://*/*"],
     content_scripts: [
       {
