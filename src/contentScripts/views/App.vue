@@ -68,8 +68,8 @@ const [showMenu, toggleMenu] = useToggle(false);
  * 跳转到指定页
  */
 async function jumpTo(index: number): Promise<void>;
-async function jumpTo(action: "next" | "prev"): Promise<void>;
-async function jumpTo(index: number | "next" | "prev") {
+async function jumpTo(action: "next" | "prev" | "fix"): Promise<void>;
+async function jumpTo(index: number | "next" | "prev" | "fix") {
   if (typeof index === "string") {
     index = {
       next: Array.isArray(currentPageIndex.value)
@@ -77,6 +77,9 @@ async function jumpTo(index: number | "next" | "prev") {
         : currentPageIndex.value + 1,
       prev: Array.isArray(currentPageIndex.value)
         ? currentPageIndex.value[0] - 2
+        : currentPageIndex.value - 1,
+      fix: Array.isArray(currentPageIndex.value)
+        ? currentPageIndex.value[0] - 1
         : currentPageIndex.value - 1,
     }[index] as number;
   }
@@ -152,10 +155,16 @@ async function renderImage(
         </div>
         <div class="footer-bar menu-bar">
           <span
-            class="change-episode-button"
+            class="change-episode-button action-button"
             :class="mangaWorker.goToNextEpisode ? '' : 'disable'"
-            @click="mangaWorker.goToNextEpisode && mangaWorker.goToNextEpisode()"
+            @click="
+              mangaWorker.goToNextEpisode && mangaWorker.goToNextEpisode()
+            "
+            title="下一话"
             ><uil-arrow-left class="action-icon"
+          /></span>
+          <span class="action-button" @click="jumpTo('fix')" title="修复分页"
+            ><lucide-wrench class="action-icon"
           /></span>
           <span
             >{{
@@ -168,10 +177,14 @@ async function renderImage(
                 : `${mangaWorker.pages.length}(${mangaWorker.pageCount})`
             }}
           </span>
+          <span><div class="action-icon"></div></span>
           <span
-            class="change-episode-button"
+            class="change-episode-button action-button"
             :class="mangaWorker.goToPrevEpisode ? '' : 'disable'"
-            @click="mangaWorker.goToPrevEpisode && mangaWorker.goToPrevEpisode()"
+            @click="
+              mangaWorker.goToPrevEpisode && mangaWorker.goToPrevEpisode()
+            "
+            title="上一话"
             ><uil-arrow-right class="action-icon"
           /></span>
         </div>
@@ -239,7 +252,7 @@ $menu-bar-height: 75px;
   }
 
   .background-panel {
-    background-color: #000000ef;
+    background-color: #4d4d4def;
   }
 
   .display-panel {
@@ -286,16 +299,31 @@ $menu-bar-height: 75px;
       .footer-bar {
         display: flex;
         flex-flow: row nowrap;
-        justify-content: space-around;
+        justify-content: center;
         align-items: center;
+        gap: 12%;
 
-        .change-episode-button:not(.disable) {
+        > * {
+          display: flex;
+          flex-flow: column nowrap;
+          justify-content: center;
+          align-items: center;
+          height: 100%;
+        }
+
+        .action-button:not(.disable) {
+          &:hover {
+            background-color: #bbbbbbc4;
+            color: #000000c4;
+          }
+
           cursor: pointer;
+          padding: 0 16px;
         }
 
         .action-icon {
-          width: 50px;
-          height: 50px;
+          width: 40px;
+          height: 40px;
         }
       }
     }
