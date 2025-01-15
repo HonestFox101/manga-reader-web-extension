@@ -24,8 +24,8 @@ export interface MangaWebPageWorker {
 
   readonly loadImage: (pageIndex: number) => Promise<Page>;
   readonly bindReaderChannel: (chan: MangaReaderChannel) => void;
-  readonly goToNextEpisode?: () => Promise<void>;
-  readonly goToPrevEpisode?: () => Promise<void>;
+  readonly goToNextEpisode: (() => Promise<void>) | null;
+  readonly goToPrevEpisode: (() => Promise<void>) | null;
 }
 
 export type MangaReaderEvent = {

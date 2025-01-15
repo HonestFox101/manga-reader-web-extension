@@ -23,10 +23,20 @@ class CopyMangaWorker implements MangaWebPageWorker {
 
   private readonly _emitter = new Emittery<MangaWebPageWorkerEvent>();
 
-  private constructor(pageCount: number, episodeName: string) {
+  private constructor(
+    pageCount: number,
+    episodeName: string,
+    goToNextEpisode?: (() => Promise<void>) | null,
+    prevEpisodeSelector?: (() => Promise<void>) | null
+  ) {
     this.pageCount = pageCount;
     this.episodeName = episodeName;
+    this.goToNextEpisode = goToNextEpisode || null;
+    this.goToPrevEpisode = prevEpisodeSelector || null;
   }
+
+  public goToNextEpisode: (() => Promise<void>) | null = null;
+  public goToPrevEpisode: (() => Promise<void>) | null = null;
 
   public async loadImage(pageIndex: number): Promise<Page> {
     if (this.pages[pageIndex].cachBlob) return this.pages[pageIndex];
@@ -57,7 +67,7 @@ class CopyMangaWorker implements MangaWebPageWorker {
   }
 
   /**
-   * 数据初始化，从DOM中获取信息
+   * 类数据初始化，从DOM中获取信息
    */
   public static async build(): Promise<MangaWebPageWorker> {
     const [total, episodeName] = (await executeOnWebpage(() => {
@@ -72,40 +82,47 @@ class CopyMangaWorker implements MangaWebPageWorker {
           .innerHTML.replace("/", " | ") as string,
       ];
     }))!;
-    for (const [selector, prop] of [
-      [
-        "body > div.footer > div.comicContent-prev:not(.index) > a",
-        "goToPrevEpisode",
-      ],
-      ["body > div.footer > div.comicContent-next > a", "goToNextEpisode"],
-    ]) {
-      const ret = await executeOnWebpage(
-        (selector) =>
-          Boolean(
-            document
-              .querySelector<HTMLAnchorElement>(selector)
-              ?.getAttribute("href")
-          ),
-        [selector]
-      );
-      if (ret) {
-        const func = async () => {
-          executeOnWebpage(
-            (selector) =>
-              document.querySelector<HTMLAnchorElement>(selector)?.click(),
-            [selector]
-          );
-        };
-        Object.defineProperty(CopyMangaWorker.prototype, prop, {
-          value: func,
-        });
-      }
-    }
-    const initMeta = new CopyMangaWorker(total, episodeName).init();
+    const goToNextEipisode = await CopyMangaWorker.buildJumpEpisodeFunc("body > div.footer > div.comicContent-next > a");
+    const goToPrevEpisode = await CopyMangaWorker.buildJumpEpisodeFunc("body > div.footer > div.comicContent-prev:not(.index) > a");
+    const initMeta = await new CopyMangaWorker(
+      total,
+      episodeName,
+      goToNextEipisode,
+      goToPrevEpisode
+    ).init();
     return initMeta as MangaWebPageWorker;
   }
 
-  public init() {
+  /**
+   * 根据CSS Selector构建跳转章节的函数
+   */
+  private static async buildJumpEpisodeFunc(selector: string) {
+    const ret = await executeOnWebpage(
+      (selector) =>
+        Boolean(
+          document
+            .querySelector<HTMLAnchorElement>(selector)
+            ?.getAttribute("href")
+        ),
+      [selector]
+    );
+    if (ret) {
+      const func = async () => {
+        executeOnWebpage(
+          (selector) =>
+            document.querySelector<HTMLAnchorElement>(selector)?.click(),
+          [selector]
+        );
+      };
+      return func;
+    }
+    return null
+  }
+
+  /**
+   * 初始化
+   */
+  public async init() {
     this.updatePage();
     return this;
   }

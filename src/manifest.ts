@@ -50,7 +50,7 @@ export async function getManifest() {
     ],
     web_accessible_resources: [
       {
-        resources: ["dist/contentScripts/index.css"],
+        resources: ["dist/contentScripts/index.css","assets/loading.png"],
         matches: ["<all_urls>"],
       },
     ],

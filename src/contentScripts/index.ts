@@ -7,13 +7,7 @@ import WebsiteInjector from "./websiteInjector.mjs";
 import Emittery from "emittery";
 import type { MangaReaderEvent } from "./manga";
 
-const mountApp = (mangaWorker: object) => {
-  // communication example: send previous tab title from background page
-  onMessage("tab-prev", ({ data }) => {
-    console.log(`[vitesse-webext] Navigate from page "${data.title}"`);
-  });
-
-  // mount component to context window
+function mountMangaReader(mangaWorker: object) {
   const container = document.createElement("div");
   container.id = __NAME__;
   const root = document.createElement("div");
@@ -34,12 +28,17 @@ const mountApp = (mangaWorker: object) => {
   setupApp(app);
   app.mount(root);
   return { app, channel };
-};
+}
 
 // Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
 (() => {
+  // communication example: send previous tab title from background page
+  onMessage("tab-prev", ({ data }) => {
+    console.log(`[vitesse-webext] Navigate from page "${data.title}"`);
+  });
+
   WebsiteInjector.inject().then(({ mangaWorker }) => {
-    const reader = mangaWorker && mountApp(mangaWorker);
+    const reader = mangaWorker && mountMangaReader(mangaWorker);
     if (reader) {
       mangaWorker.bindReaderChannel(reader.channel);
       Object.assign(self, { mangaReader: reader, mangaWorker: mangaWorker });

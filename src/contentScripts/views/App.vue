@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useTemplateRefsList, useToggle } from "@vueuse/core";
+import { onKeyStroke, useTemplateRefsList, useToggle } from "@vueuse/core";
 import { ref, onMounted } from "vue";
 import { MangaWebPageWorker, MangaReaderChannel, Page } from "../manga";
 
@@ -32,6 +32,23 @@ onMounted(async () => {
         }
       }
     })
+  );
+  const baseKeyStrokeOption = { dedupe: true };
+  // 监听键盘事件
+  onKeyStroke(
+    ["ArrowLeft", "a", "A"],
+    (e) => (e.preventDefault(), jumpTo("next")),
+    baseKeyStrokeOption
+  );
+  onKeyStroke(
+    ["ArrowRight", "d", "D"],
+    (e) => (e.preventDefault(), jumpTo("prev")),
+    baseKeyStrokeOption
+  );
+  onKeyStroke(
+    [" "],
+    (e) => (e.preventDefault(), toggleMenu()),
+    baseKeyStrokeOption
   );
   await jumpTo(0);
   toggleShow(true);
