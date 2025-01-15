@@ -22,7 +22,7 @@ function mountMangaReader(mangaWorker: MangaWebPageWorker) {
   shadowDOM.appendChild(styleEl);
   shadowDOM.appendChild(root);
   document.body.appendChild(container);
-  
+
   const app = createApp(App, { mangaWorker });
   setupApp(app);
   const component = app.mount(root) as InstanceType<typeof App>;
@@ -35,13 +35,16 @@ function mountMangaReader(mangaWorker: MangaWebPageWorker) {
   onMessage("tab-prev", ({ data }) => {
     console.log(`[vitesse-webext] Navigate from page "${data.title}"`);
   });
-
   WebsiteInjector.inject().then(({ mangaWorker }) => {
     const { channel, component } =
       (mangaWorker && mountMangaReader(mangaWorker)) || {};
+    Object.assign(self, {
+      channel,
+      mangaWorker,
+      mangaReader: component,
+    });
     if (mangaWorker && channel) {
       mangaWorker.subscribeReaderChannel(channel);
-      Object.assign(self, { vueApp: component, mangaWorker });
     }
   });
 })();

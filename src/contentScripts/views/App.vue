@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onKeyStroke, useTemplateRefsList, useToggle } from "@vueuse/core";
-import { ref, onMounted } from "vue";
-import { MangaWebPageWorker, MangaReaderChannel, Page } from "../manga";
+import { ref, onMounted, toRaw } from "vue";
+import { MangaWebPageWorker, MangaReaderChannel, Page, MangaReaderEvent } from "../manga";
 import Emittery from "emittery";
 
 const loadingImageUrl = browser.runtime.getURL("/assets/loading.png");
@@ -13,7 +13,7 @@ const props = defineProps<{
 const show = defineModel<boolean>({ default: false });
 const toggleShow = (value?: boolean) => {
   show.value = typeof value === "undefined" ? !show.value : value;
-  channel.value.emit("mangaReaderToggled", show.value);
+  channel.emit("mangaReaderToggled", show.value);
 };
 
 onMounted(async () => {
@@ -54,7 +54,7 @@ onMounted(async () => {
   toggleShow(true);
 });
 
-const channel = ref<MangaReaderChannel>(new Emittery());
+const channel: MangaReaderChannel = new Emittery<MangaReaderEvent>();
 
 const currentPageIndex = ref<number | [number, number]>(0);
 
@@ -114,7 +114,7 @@ async function jumpTo(index: number | "next" | "prev" | "fix") {
   } else if (index === props.mangaWorker.pageCount - 1) {
     currentPageIndex.value = index;
   }
-  channel.value.emit("jump", currentPageIndex.value);
+  channel.emit("jump", currentPageIndex.value);
   preloadImages(...Array.from({ length: 5 }, (_, i) => i + index)); // 根据跳转到的页面预加载图片
 }
 
