@@ -38,6 +38,7 @@ class CopyMangaWorker implements MangaWebPageWorker {
   public goToNextEpisode: (() => Promise<void>) | null = null;
   public goToPrevEpisode: (() => Promise<void>) | null = null;
 
+
   public async loadImage(pageIndex: number): Promise<Page> {
     if (this.pages[pageIndex].cachBlob) return this.pages[pageIndex];
     const page = this.pages[pageIndex];
@@ -53,7 +54,8 @@ class CopyMangaWorker implements MangaWebPageWorker {
     return this.pages[pageIndex];
   }
 
-  public bindReaderChannel(channel: MangaReaderChannel): void {
+
+  public subscribeReaderChannel(channel: MangaReaderChannel): void {
     channel.on("mangaReaderToggled", (val) => {
       executeOnWebpage(
         (val) => {
@@ -82,8 +84,12 @@ class CopyMangaWorker implements MangaWebPageWorker {
           .innerHTML.replace("/", " | ") as string,
       ];
     }))!;
-    const goToNextEipisode = await CopyMangaWorker.buildJumpEpisodeFunc("body > div.footer > div.comicContent-next > a");
-    const goToPrevEpisode = await CopyMangaWorker.buildJumpEpisodeFunc("body > div.footer > div.comicContent-prev:not(.index) > a");
+    const goToNextEipisode = await CopyMangaWorker.buildJumpEpisodeFunc(
+      "body > div.footer > div.comicContent-next > a"
+    );
+    const goToPrevEpisode = await CopyMangaWorker.buildJumpEpisodeFunc(
+      "body > div.footer > div.comicContent-prev:not(.index) > a"
+    );
     const initMeta = await new CopyMangaWorker(
       total,
       episodeName,
@@ -116,7 +122,7 @@ class CopyMangaWorker implements MangaWebPageWorker {
       };
       return func;
     }
-    return null
+    return null;
   }
 
   /**
@@ -164,11 +170,10 @@ export default class WebsiteInjector {
   private constructor() {}
 
   public static async inject(): Promise<{ mangaWorker?: MangaWebPageWorker }> {
-    const res = {};
-    if (self.location.href.match(CopyMangaWorker.matchPattern)) {
+    if (CopyMangaWorker.matchPattern.exec(self.location.href)) {
       const mangaWorker = await CopyMangaWorker.build();
-      Object.assign(res, { mangaWorker });
+      return { mangaWorker };
     }
-    return res;
+    return {};
   }
 }

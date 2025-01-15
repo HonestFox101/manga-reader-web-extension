@@ -4,10 +4,9 @@ import { createApp } from "vue";
 import App from "./views/App.vue";
 import { setupApp } from "~/logic/common-setup";
 import WebsiteInjector from "./websiteInjector.mjs";
-import Emittery from "emittery";
-import type { MangaReaderEvent } from "./manga";
+import { MangaWebPageWorker } from "./manga";
 
-function mountMangaReader(mangaWorker: object) {
+function mountMangaReader(mangaWorker: MangaWebPageWorker) {
   const container = document.createElement("div");
   container.id = __NAME__;
   const root = document.createElement("div");
@@ -23,11 +22,11 @@ function mountMangaReader(mangaWorker: object) {
   shadowDOM.appendChild(styleEl);
   shadowDOM.appendChild(root);
   document.body.appendChild(container);
-  const channel = new Emittery<MangaReaderEvent>();
-  const app = createApp(App, { mangaWorker, channel });
+  
+  const app = createApp(App, { mangaWorker });
   setupApp(app);
-  app.mount(root);
-  return { app, channel };
+  const component = app.mount(root) as InstanceType<typeof App>;
+  return { component, channel: component.channel };
 }
 
 // Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
@@ -38,10 +37,11 @@ function mountMangaReader(mangaWorker: object) {
   });
 
   WebsiteInjector.inject().then(({ mangaWorker }) => {
-    const reader = mangaWorker && mountMangaReader(mangaWorker);
-    if (reader) {
-      mangaWorker.bindReaderChannel(reader.channel);
-      Object.assign(self, { mangaReader: reader, mangaWorker: mangaWorker });
+    const { channel, component } =
+      (mangaWorker && mountMangaReader(mangaWorker)) || {};
+    if (mangaWorker && channel) {
+      mangaWorker.subscribeReaderChannel(channel);
+      Object.assign(self, { vueApp: component, mangaWorker });
     }
   });
 })();

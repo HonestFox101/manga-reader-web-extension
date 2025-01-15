@@ -2,18 +2,18 @@
 import { onKeyStroke, useTemplateRefsList, useToggle } from "@vueuse/core";
 import { ref, onMounted } from "vue";
 import { MangaWebPageWorker, MangaReaderChannel, Page } from "../manga";
+import Emittery from "emittery";
 
 const loadingImageUrl = browser.runtime.getURL("/assets/loading.png");
 
 const props = defineProps<{
   mangaWorker: MangaWebPageWorker;
-  channel?: MangaReaderChannel;
 }>();
 
 const show = defineModel<boolean>({ default: false });
 const toggleShow = (value?: boolean) => {
   show.value = typeof value === "undefined" ? !show.value : value;
-  props.channel?.emit("mangaReaderToggled", show.value);
+  channel.value.emit("mangaReaderToggled", show.value);
 };
 
 onMounted(async () => {
@@ -54,6 +54,8 @@ onMounted(async () => {
   toggleShow(true);
 });
 
+const channel = ref<MangaReaderChannel>(new Emittery());
+
 const currentPageIndex = ref<number | [number, number]>(0);
 
 const pageRefs = useTemplateRefsList<HTMLImageElement>();
@@ -69,6 +71,7 @@ const currentPages = computed(() => {
     }
     return { ...pages[i], index: i } as any;
   });
+  // 等待下一次渲染周期，同步更新<img>元素
   nextTick().then(() => {
     for (let i = 0; i < pageRefs.value.length; i++) {
       const page = pages[i];
@@ -80,6 +83,9 @@ const currentPages = computed(() => {
 });
 
 const [showMenu, toggleMenu] = useToggle(false);
+
+
+defineExpose({ toggleShow, channel });
 
 /**
  * 跳转到指定页
@@ -108,8 +114,8 @@ async function jumpTo(index: number | "next" | "prev" | "fix") {
   } else if (index === props.mangaWorker.pageCount - 1) {
     currentPageIndex.value = index;
   }
-  props.channel?.emit("jump", currentPageIndex.value);
-  preloadImages(...Array.from({ length: 10 }, (_, i) => i + index)); // 根据跳转到的页面预加载图片
+  channel.value.emit("jump", currentPageIndex.value);
+  preloadImages(...Array.from({ length: 5 }, (_, i) => i + index)); // 根据跳转到的页面预加载图片
 }
 
 /**
