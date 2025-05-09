@@ -10,7 +10,7 @@ import { fetchCors } from "./fetchCors.mjs";
 
 class CopyMangaWorker implements MangaWebPageWorker {
   public static readonly matchPattern =
-    /^https?:\/\/(copymanga\.tv|mangacopy\.com)\/comic\/\w+\/chapter\/[\w-]+$/g;
+    /^https?:\/\/(copymanga\.tv|mangacopy\.com|www\.copy-manga\.com)\/comic\/\w+\/chapter\/[\w-]+$/g;
   public readonly pageCount;
   public readonly pages: Page[] = [];
   public readonly episodeName;
