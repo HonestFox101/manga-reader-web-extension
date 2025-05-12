@@ -5,12 +5,12 @@ import {
   MangaWebPageWorkerEvent,
   Page,
 } from "./manga";
-import { base64ToBlob, executeOnWebpage, getImageSizeFromBlob } from "~/utils";
+import { base64ToBlob, exec, getImageSizeFromBlob } from "~/utils";
 import { fetchCors } from "./fetchCors.mjs";
 
 class CopyMangaWorker implements MangaWebPageWorker {
   public static readonly matchPattern =
-    /^https?:\/\/(copymanga\.tv|mangacopy\.com|www\.copy-manga\.com)\/comic\/\w+\/chapter\/[\w-]+$/g;
+    /^https?:\/\/(copymanga\.tv|mangacopy\.com|www\.copy-manga\.com|www\.copy20\.com)\/comic\/\w+\/chapter\/[\w-]+$/g;
   public readonly pageCount;
   public readonly pages: Page[] = [];
   public readonly episodeName;
@@ -57,7 +57,7 @@ class CopyMangaWorker implements MangaWebPageWorker {
 
   public subscribeReaderChannel(channel: MangaReaderChannel): void {
     channel.on("mangaReaderToggled", (val) => {
-      executeOnWebpage(
+      exec(
         (val) => {
           document.querySelector<HTMLDivElement>(
             "body > h4.header"
@@ -72,7 +72,7 @@ class CopyMangaWorker implements MangaWebPageWorker {
    * 类数据初始化，从DOM中获取信息
    */
   public static async build(): Promise<MangaWebPageWorker> {
-    const [total, episodeName] = (await executeOnWebpage(() => {
+    const [total, episodeName] = (await exec(() => {
       return [
         parseInt(
           document.querySelector<HTMLSpanElement>(
@@ -103,7 +103,7 @@ class CopyMangaWorker implements MangaWebPageWorker {
    * 根据CSS Selector构建跳转章节的函数
    */
   private static async buildJumpEpisodeFunc(selector: string) {
-    const ret = await executeOnWebpage(
+    const ret = await exec(
       (selector) =>
         Boolean(
           document
@@ -114,7 +114,7 @@ class CopyMangaWorker implements MangaWebPageWorker {
     );
     if (ret) {
       const func = async () => {
-        executeOnWebpage(
+        exec(
           (selector) =>
             document.querySelector<HTMLAnchorElement>(selector)?.click(),
           [selector]
@@ -137,7 +137,7 @@ class CopyMangaWorker implements MangaWebPageWorker {
    * 持续更新漫画的url
    */
   private async updatePage() {
-    const imgUrls = (await executeOnWebpage(() => {
+    const imgUrls = (await exec(() => {
       const randint = (start: number, size: number) =>
         start + Math.floor(Math.random() * size);
       randint(0, 15) >= 1
@@ -167,7 +167,7 @@ class CopyMangaWorker implements MangaWebPageWorker {
 }
 
 export default class WebsiteInjector {
-  private constructor() {}
+  private constructor() { }
 
   public static async inject(): Promise<{ mangaWorker?: MangaWebPageWorker }> {
     if (CopyMangaWorker.matchPattern.exec(self.location.href)) {

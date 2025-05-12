@@ -14,17 +14,17 @@ type RunOnBackgroundParams<R, P extends unknown[]> = {
 /**
  * 在某个网页执行代码，通常用于操控DOM元素
  */
-export async function executeOnWebpage<R, P extends unknown[]>(
+export async function exec<R, P extends unknown[]>(
   func: (...args: P) => R | Promise<R>,
   args?: P
 ): Promise<R | null>;
-export async function executeOnWebpage<R, P extends unknown[]>(
+export async function exec<R, P extends unknown[]>(
   params: RunOnContentScriptParams<R, P>
 ): Promise<R | null>;
-export async function executeOnWebpage<R, P extends unknown[]>(
+export async function exec<R, P extends unknown[]>(
   params: RunOnBackgroundParams<R, P>
 ): Promise<R | null>;
-export async function executeOnWebpage<R, P extends unknown[]>(
+export async function exec<R, P extends unknown[]>(
   params:
     | RunOnContentScriptParams<R, P>
     | RunOnBackgroundParams<R, P>

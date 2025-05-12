@@ -8,5 +8,4 @@
   "files.associations": {
     "*.css": "postcss"
   },
-  "prettier.tabWidth": 2
 }

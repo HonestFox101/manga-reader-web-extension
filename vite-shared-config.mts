@@ -1,15 +1,12 @@
-/// <reference types="vitest" />
-
 import { dirname, relative } from 'node:path'
 import type { UserConfig } from 'vite'
-import { defineConfig } from 'vite'
 import Vue from '@vitejs/plugin-vue'
 import Icons from 'unplugin-icons/vite'
 import IconsResolver from 'unplugin-icons/resolver'
 import Components from 'unplugin-vue-components/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 
-import { isDev, port, r } from './scripts/utils'
+import { isDev, r } from './scripts/utils'
 import packageJson from './package.json'
 
 export const sharedConfig: UserConfig = {
@@ -75,38 +72,3 @@ export const sharedConfig: UserConfig = {
     ],
   },
 }
-
-export default defineConfig(({ command }) => ({
-  ...sharedConfig,
-  base: command === 'serve' ? `http://localhost:${port}/` : '/dist/',
-  server: {
-    port,
-    hmr: {
-      host: 'localhost',
-    },
-    origin: `http://localhost:${port}`,
-  },
-  build: {
-    watch: isDev
-      ? {}
-      : undefined,
-    outDir: r('extension/dist'),
-    emptyOutDir: false,
-    sourcemap: isDev ? 'inline' : false,
-    // https://developer.chrome.com/docs/webstore/program_policies/#:~:text=Code%20Readability%20Requirements
-    terserOptions: {
-      mangle: false,
-    },
-    rollupOptions: {
-      input: {
-        options: r('src/options/index.html'),
-        popup: r('src/popup/index.html'),
-        sidepanel: r('src/sidepanel/index.html'),
-      },
-    },
-  },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-  },
-}))

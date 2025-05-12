@@ -16,20 +16,20 @@ export async function getManifest() {
     description: pkg.description,
     action: {
       default_icon: "./assets/icons8-manga-48.png",
-      default_popup: "./dist/popup/index.html",
+      // default_popup: "./dist/popup/index.html",
     },
-    options_ui: {
-      page: "./dist/options/index.html",
-      open_in_tab: true,
-    },
+    // options_ui: {
+    //   page: "./dist/options/index.html",
+    //   open_in_tab: true,
+    // },
     background: isFirefox
       ? {
-          scripts: ["dist/background/index.mjs"],
-          type: "module",
-        }
+        scripts: ["dist/background/index.mjs"],
+        type: "module",
+      }
       : {
-          service_worker: "./dist/background/index.mjs",
-        },
+        service_worker: "./dist/background/index.mjs",
+      },
     icons: {
       16: "./assets/icons8-manga-48.png",
       48: "./assets/icons8-manga-48.png",
@@ -38,7 +38,7 @@ export async function getManifest() {
       "tabs",
       "storage",
       "activeTab",
-      "sidePanel",
+      // "sidePanel",
       "scripting",
     ].concat(isDev ? ["webNavigation"] : []),
     host_permissions: ["*://*/*"],
@@ -50,38 +50,30 @@ export async function getManifest() {
     ],
     web_accessible_resources: [
       {
-        resources: ["dist/contentScripts/index.css","assets/loading.png"],
+        resources: ["dist/contentScripts/index.css", "assets/loading.png"],
         matches: ["<all_urls>"],
       },
     ],
     content_security_policy: {
       extension_pages: isDev
         ? // this is required on dev for Vite script to load
-          `script-src \'self\' http://localhost:${port}; object-src \'self\'`
+        `script-src \'self\' http://localhost:${port}; object-src \'self\'`
         : "script-src 'self'; object-src 'self'",
     },
   };
 
-  // add sidepanel
-  if (isFirefox) {
-    manifest.sidebar_action = {
-      default_panel: "dist/sidepanel/index.html",
-    };
-  } else {
-    // the sidebar_action does not work for chromium based
-    (manifest as any).side_panel = {
-      default_path: "dist/sidepanel/index.html",
-    };
-  }
-
-  // FIXME: not work in MV3
-  if (isDev && false) {
-    // for content script, as browsers will cache them for each reload,
-    // we use a background script to always inject the latest version
-    // see src/background/contentScriptHMR.ts
-    delete manifest.content_scripts;
-    manifest.permissions?.push("webNavigation");
-  }
+  //#region add sidepanel
+  // if (isFirefox) {
+  //   manifest.sidebar_action = {
+  //     default_panel: "dist/sidepanel/index.html",
+  //   };
+  // } else {
+  //   // the sidebar_action does not work for chromium based
+  //   (manifest as any).side_panel = {
+  //     default_path: "dist/sidepanel/index.html",
+  //   };
+  // }
+  //#endregion
 
   return manifest;
 }
