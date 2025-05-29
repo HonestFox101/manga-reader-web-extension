@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { onKeyStroke, useTemplateRefsList, useToggle } from "@vueuse/core";
-import { ref, onMounted } from "vue";
 import { MangaWebPageWorker, MangaReaderChannel, Page, MangaReaderEvent } from "../manga";
 import Emittery from "emittery";
 

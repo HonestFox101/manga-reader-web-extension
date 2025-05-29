@@ -10,16 +10,19 @@ import { fetchCors } from "./fetchCors.mjs";
 
 class CopyMangaWorker implements MangaWebPageWorker {
   public static readonly matchPattern =
-    /^https?:\/\/(copymanga\.tv|mangacopy\.com|www\.copy-manga\.com|www\.copy20\.com)\/comic\/\w+\/chapter\/[\w-]+$/g;
-  public readonly pageCount;
+    /^https?:\/\/(copymanga\.tv|mangacopy\.com|copy-manga\.com|www\.copy20\.com)\/comic\/\w+\/chapter\/[\w-]+$/g;
+
+  public readonly pageCount: number;
   public readonly pages: Page[] = [];
-  public readonly episodeName;
+  public readonly episodeName: string;
   public get loaded() {
     return this.pages.length === this.pageCount;
   }
   public get events() {
     return this._emitter;
   }
+  public goToNextEpisode: (() => Promise<void>) | null;
+  public goToPrevEpisode: (() => Promise<void>) | null;
 
   private readonly _emitter = new Emittery<MangaWebPageWorkerEvent>();
 
@@ -35,10 +38,6 @@ class CopyMangaWorker implements MangaWebPageWorker {
     this.goToPrevEpisode = prevEpisodeSelector || null;
   }
 
-  public goToNextEpisode: (() => Promise<void>) | null = null;
-  public goToPrevEpisode: (() => Promise<void>) | null = null;
-
-
   public async loadImage(pageIndex: number): Promise<Page> {
     if (this.pages[pageIndex].cachBlob) return this.pages[pageIndex];
     const page = this.pages[pageIndex];
@@ -53,7 +52,6 @@ class CopyMangaWorker implements MangaWebPageWorker {
     });
     return this.pages[pageIndex];
   }
-
 
   public subscribeReaderChannel(channel: MangaReaderChannel): void {
     channel.on("mangaReaderToggled", (val) => {
@@ -143,13 +141,11 @@ class CopyMangaWorker implements MangaWebPageWorker {
       randint(0, 15) >= 1
         ? self.scrollBy(0, randint(300, 300))
         : scrollTo(0, 0);
-      let elements = document.querySelectorAll(
-        "body > div.container-fluid.comicContent > div > ul > li > img"
-      );
-      const imgUrls: string[] = [];
-      elements.forEach((e) => {
-        imgUrls.push(e.getAttribute("data-src")!);
-      });
+      const imgUrls: string[] = Array.from(
+        document.querySelectorAll(
+          ".container-fluid.comicContent > div > ul > li > img"
+        )
+      ).map((e) => e.getAttribute("data-src")!);
       return imgUrls;
     }))!;
     for (let i = 0; i < this.pages.length; i++) {
@@ -167,7 +163,7 @@ class CopyMangaWorker implements MangaWebPageWorker {
 }
 
 export default class WebsiteInjector {
-  private constructor() { }
+  private constructor() {}
 
   public static async inject(): Promise<{ mangaWorker?: MangaWebPageWorker }> {
     if (CopyMangaWorker.matchPattern.exec(self.location.href)) {

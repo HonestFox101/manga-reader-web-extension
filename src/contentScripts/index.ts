@@ -1,8 +1,6 @@
 /* eslint-disable no-console */
-import { onMessage } from "webext-bridge/content-script";
 import { createApp } from "vue";
 import App from "./views/App.vue";
-import { setupApp } from "~/logic/common-setup";
 import WebsiteInjector from "./websiteInjector.mjs";
 import { MangaWebPageWorker } from "./manga";
 
@@ -24,7 +22,6 @@ function mountMangaReader(mangaWorker: MangaWebPageWorker) {
   document.body.appendChild(container);
 
   const app = createApp(App, { mangaWorker });
-  setupApp(app);
   const component = app.mount(root) as InstanceType<typeof App>;
   return { component, channel: component.channel };
 }
@@ -32,13 +29,10 @@ function mountMangaReader(mangaWorker: MangaWebPageWorker) {
 // Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
 (() => {
   // communication example: send previous tab title from background page
-  onMessage("tab-prev", ({ data }) => {
-    console.log(`[vitesse-webext] Navigate from page "${data.title}"`);
-  });
   WebsiteInjector.inject().then(({ mangaWorker }) => {
     const { channel, component } =
       (mangaWorker && mountMangaReader(mangaWorker)) || {};
-    Object.assign(self, {
+    __DEV__ && Object.assign(self, {
       channel,
       mangaWorker,
       mangaReader: component,
