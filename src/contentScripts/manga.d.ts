@@ -59,6 +59,10 @@ export interface MangaWebPageWorker {
    * 跳转到上一话
    */
   readonly goToPrevEpisode: (() => Promise<void>) | null;
+  /**
+   * 跳转到目录页
+   */
+  readonly goToCatalogPage: (() => Promise<void>) | null;
 }
 
 export type MangaReaderEvent = {

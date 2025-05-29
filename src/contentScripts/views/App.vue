@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { onKeyStroke, useTemplateRefsList, useToggle } from "@vueuse/core";
-import { MangaWebPageWorker, MangaReaderChannel, Page, MangaReaderEvent } from "../manga";
+import {
+  MangaWebPageWorker,
+  MangaReaderChannel,
+  Page,
+  MangaReaderEvent,
+} from "../manga";
 import Emittery from "emittery";
 
 const loadingImageUrl = browser.runtime.getURL("/assets/loading.png");
@@ -82,7 +87,6 @@ const currentPages = computed(() => {
 });
 
 const [showMenu, toggleMenu] = useToggle(false);
-
 
 defineExpose({ toggleShow, channel });
 
@@ -183,13 +187,14 @@ async function renderImage(
               mangaWorker.goToNextEpisode && mangaWorker.goToNextEpisode()
             "
             title="下一话"
-            ><uil-arrow-left class="action-icon"
-          /></span>
-          <span class="action-button" @click="jumpTo('fix')" title="修复分页"
-            ><lucide-wrench class="action-icon"
-          /></span>
-          <span
-            >{{
+          >
+            <uil-arrow-left class="action-icon" />
+          </span>
+          <span class="action-button" @click="jumpTo('fix')" title="修复分页">
+            <lucide-wrench class="action-icon" />
+          </span>
+          <span>
+            {{
               typeof currentPageIndex === "number"
                 ? currentPageIndex + 1
                 : currentPageIndex.map((i) => i + 1).join("-")
@@ -199,7 +204,15 @@ async function renderImage(
                 : `${mangaWorker.pages.length}(${mangaWorker.pageCount})`
             }}
           </span>
-          <span><div class="action-icon"></div></span>
+          <span
+            class="action-button"
+            @click="
+              mangaWorker.goToCatalogPage && mangaWorker.goToCatalogPage()
+            "
+            title="返回目录"
+          >
+            <carbon-catalog class="action-icon" />
+          </span>
           <span
             class="change-episode-button action-button"
             :class="mangaWorker.goToPrevEpisode ? '' : 'disable'"
@@ -207,8 +220,9 @@ async function renderImage(
               mangaWorker.goToPrevEpisode && mangaWorker.goToPrevEpisode()
             "
             title="上一话"
-            ><uil-arrow-right class="action-icon"
-          /></span>
+          >
+            <uil-arrow-right class="action-icon" />
+          </span>
         </div>
       </div>
     </div>

@@ -21,21 +21,24 @@ class CopyMangaWorker implements MangaWebPageWorker {
   public get events() {
     return this._emitter;
   }
-  public goToNextEpisode: (() => Promise<void>) | null;
-  public goToPrevEpisode: (() => Promise<void>) | null;
+  public readonly goToNextEpisode: (() => Promise<void>) | null;
+  public readonly goToPrevEpisode: (() => Promise<void>) | null;
+  public readonly goToCatalogPage: (() => Promise<void>) | null;
 
   private readonly _emitter = new Emittery<MangaWebPageWorkerEvent>();
 
   private constructor(
     pageCount: number,
     episodeName: string,
-    goToNextEpisode?: (() => Promise<void>) | null,
-    prevEpisodeSelector?: (() => Promise<void>) | null
+    goToNextEpisode?: () => Promise<void>,
+    prevEpisodeSelector?: () => Promise<void>,
+    goToCatalogPage?: () => Promise<void>
   ) {
     this.pageCount = pageCount;
     this.episodeName = episodeName;
     this.goToNextEpisode = goToNextEpisode || null;
     this.goToPrevEpisode = prevEpisodeSelector || null;
+    this.goToCatalogPage = goToCatalogPage || null;
   }
 
   public async loadImage(pageIndex: number): Promise<Page> {
@@ -88,11 +91,15 @@ class CopyMangaWorker implements MangaWebPageWorker {
     const goToPrevEpisode = await CopyMangaWorker.buildJumpEpisodeFunc(
       "body > div.footer > div.comicContent-prev:not(.index) > a"
     );
+    const goToCatalogPage = await CopyMangaWorker.buildJumpEpisodeFunc(
+      "body > div.footer > div.comicContent-prev.list > a"
+    )
     const initMeta = await new CopyMangaWorker(
       total,
       episodeName,
       goToNextEipisode,
-      goToPrevEpisode
+      goToPrevEpisode,
+      goToCatalogPage
     ).init();
     return initMeta as MangaWebPageWorker;
   }
@@ -120,7 +127,7 @@ class CopyMangaWorker implements MangaWebPageWorker {
       };
       return func;
     }
-    return null;
+    return undefined;
   }
 
   /**
