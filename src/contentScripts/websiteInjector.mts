@@ -60,9 +60,15 @@ class CopyMangaWorker implements MangaWebPageWorker {
     channel.on("mangaReaderToggled", (val) => {
       exec(
         (val) => {
-          document.querySelector<HTMLDivElement>(
-            "body > h4.header"
-          )!.style.display = val ? "none" : "";
+          if (val) {
+            const styleEl = document.createElement("style");
+            styleEl.id = "custom-style";
+            styleEl.innerHTML = `* { scrollbar-width: none; }\n`
+            styleEl.innerHTML += `body > h4.header { display: none }\n`
+            document.head.appendChild(styleEl);
+          } else {
+            document.head.querySelector('#custom-style')?.remove();
+          }
         },
         [val]
       );
@@ -170,7 +176,7 @@ class CopyMangaWorker implements MangaWebPageWorker {
 }
 
 export default class WebsiteInjector {
-  private constructor() {}
+  private constructor() { }
 
   public static async inject(): Promise<{ mangaWorker?: MangaWebPageWorker }> {
     if (CopyMangaWorker.matchPattern.exec(self.location.href)) {
