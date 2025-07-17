@@ -6,22 +6,18 @@ import { sendMessage } from "webext-bridge/content-script";
 export async function fetchCors(
   url: string,
   returnType: "text",
-  init?: RequestInit
+  init?: RequestInit,
 ): Promise<string>;
 export async function fetchCors(
   url: string,
   returnType: "base64",
-  init?: RequestInit
+  init?: RequestInit,
 ): Promise<string>;
 export async function fetchCors(
   url: string,
   returnType: "text" | "base64",
-  init?: RequestInit
+  init?: RequestInit,
 ): Promise<string> {
-  const { data } = await sendMessage(
-    "just-cors",
-    { url, returnType, init },
-    "background"
-  );
+  const { data } = await sendMessage("just-cors", { url, returnType, init }, "background");
   return data;
 }

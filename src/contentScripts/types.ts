@@ -34,14 +34,10 @@ export interface MangaWebPageWorker {
    * 数据是否已经加载完毕
    */
   readonly loaded: boolean;
-
   /**
    * 事件频道
    */
-  readonly events: Pick<
-    Emittery<MangaWebPageWorkerEvent>,
-    "on" | "off" | "once" | "emit"
-  >;
+  readonly events: Pick<Emittery<MangaWebPageWorkerEvent>, "on" | "off" | "once" | "emit">;
 
   /**
    * 加载图片缓存
@@ -73,7 +69,4 @@ export type MangaReaderEvent = {
 /**
  * 漫画阅读器消息频道
  */
-export type MangaReaderChannel = Pick<
-  Emittery<MangaReaderEvent>,
-  "on" | "off" | "once" | "emit"
->;
+export type MangaReaderChannel = Pick<Emittery<MangaReaderEvent>, "on" | "off" | "once" | "emit">;

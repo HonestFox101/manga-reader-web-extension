@@ -25,7 +25,7 @@ browser.runtime.onInstalled.addListener((): void => {
   console.log("Extension installed");
 });
 
-// 在Service Worker调用fetch，解决跨域问题
+/** 在Service Worker调用fetch，解决跨域问题 */
 onMessage("just-cors", async (message) => {
   const { data } = message;
   const response = await fetch(data.url, {

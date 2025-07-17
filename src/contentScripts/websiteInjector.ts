@@ -1,16 +1,16 @@
 import Emittery from "emittery";
-import {
+import { base64ToBlob, exec, getImageSizeFromBlob } from "~/utils";
+import { fetchCors } from "./fetchCors";
+import type {
   MangaReaderChannel,
   MangaWebPageWorker,
   MangaWebPageWorkerEvent,
   Page,
-} from "./manga";
-import { base64ToBlob, exec, getImageSizeFromBlob } from "~/utils";
-import { fetchCors } from "./fetchCors.mjs";
+} from "./types";
 
 class CopyMangaWorker implements MangaWebPageWorker {
   public static readonly matchPattern =
-    /^https?:\/\/(copymanga\.tv|mangacopy\.com|copy-manga\.com|www\.copy20\.com)\/comic\/\w+\/chapter\/[\w-]+$/g;
+    /^https?:\/\/(copymanga\.tv|mangacopy\.com|copy-manga\.com|www\.copy20\.com|www.copy.com|www\.2025copy\.com)\/comic\/\w+\/chapter\/[\w-]+$/g;
 
   public readonly pageCount: number;
   public readonly pages: Page[] = [];
@@ -32,7 +32,7 @@ class CopyMangaWorker implements MangaWebPageWorker {
     episodeName: string,
     goToNextEpisode?: () => Promise<void>,
     prevEpisodeSelector?: () => Promise<void>,
-    goToCatalogPage?: () => Promise<void>
+    goToCatalogPage?: () => Promise<void>,
   ) {
     this.pageCount = pageCount;
     this.episodeName = episodeName;
@@ -46,9 +46,7 @@ class CopyMangaWorker implements MangaWebPageWorker {
     const page = this.pages[pageIndex];
     const base64 = await fetchCors(page.url, "base64");
     this.pages[pageIndex].cachBlob = base64ToBlob(base64, "image/webp");
-    this.pages[pageIndex].size = await getImageSizeFromBlob(
-      this.pages[pageIndex].cachBlob
-    );
+    this.pages[pageIndex].size = await getImageSizeFromBlob(this.pages[pageIndex].cachBlob);
     this.events.emit("pageLoaded", {
       page: this.pages[pageIndex],
       index: pageIndex,
@@ -63,14 +61,14 @@ class CopyMangaWorker implements MangaWebPageWorker {
           if (val) {
             const styleEl = document.createElement("style");
             styleEl.id = "custom-style";
-            styleEl.innerHTML = `* { scrollbar-width: none; }\n`
-            styleEl.innerHTML += `body > h4.header { display: none }\n`
+            styleEl.innerHTML = `* { scrollbar-width: none; }\n`;
+            styleEl.innerHTML += `body > h4.header { display: none }\n`;
             document.head.appendChild(styleEl);
           } else {
-            document.head.querySelector('#custom-style')?.remove();
+            document.head.querySelector("#custom-style")?.remove();
           }
         },
-        [val]
+        [val],
       );
     });
   }
@@ -82,9 +80,8 @@ class CopyMangaWorker implements MangaWebPageWorker {
     const [total, episodeName] = (await exec(() => {
       return [
         parseInt(
-          document.querySelector<HTMLSpanElement>(
-            "body > div:nth-child(2) > span.comicCount"
-          )!.innerText
+          document.querySelector<HTMLSpanElement>("body > div:nth-child(2) > span.comicCount")!
+            .innerText,
         ) as number,
         document
           .querySelector<HTMLDivElement>("body > h4")!
@@ -92,20 +89,20 @@ class CopyMangaWorker implements MangaWebPageWorker {
       ];
     }))!;
     const goToNextEipisode = await CopyMangaWorker.buildJumpEpisodeFunc(
-      "body > div.footer > div.comicContent-next > a"
+      "body > div.footer > div.comicContent-next > a",
     );
     const goToPrevEpisode = await CopyMangaWorker.buildJumpEpisodeFunc(
-      "body > div.footer > div.comicContent-prev:not(.index) > a"
+      "body > div.footer > div.comicContent-prev:not(.index) > a",
     );
     const goToCatalogPage = await CopyMangaWorker.buildJumpEpisodeFunc(
-      "body > div.footer > div.comicContent-prev.list > a"
-    )
+      "body > div.footer > div.comicContent-prev.list > a",
+    );
     const initMeta = await new CopyMangaWorker(
       total,
       episodeName,
       goToNextEipisode,
       goToPrevEpisode,
-      goToCatalogPage
+      goToCatalogPage,
     ).init();
     return initMeta as MangaWebPageWorker;
   }
@@ -116,19 +113,14 @@ class CopyMangaWorker implements MangaWebPageWorker {
   private static async buildJumpEpisodeFunc(selector: string) {
     const ret = await exec(
       (selector) =>
-        Boolean(
-          document
-            .querySelector<HTMLAnchorElement>(selector)
-            ?.getAttribute("href")
-        ),
-      [selector]
+        Boolean(document.querySelector<HTMLAnchorElement>(selector)?.getAttribute("href")),
+      [selector],
     );
     if (ret) {
       const func = async () => {
         exec(
-          (selector) =>
-            document.querySelector<HTMLAnchorElement>(selector)?.click(),
-          [selector]
+          (selector) => document.querySelector<HTMLAnchorElement>(selector)?.click(),
+          [selector],
         );
       };
       return func;
@@ -149,15 +141,10 @@ class CopyMangaWorker implements MangaWebPageWorker {
    */
   private async updatePage() {
     const imgUrls = (await exec(() => {
-      const randint = (start: number, size: number) =>
-        start + Math.floor(Math.random() * size);
-      randint(0, 15) >= 1
-        ? self.scrollBy(0, randint(300, 300))
-        : scrollTo(0, 0);
+      const randint = (start: number, size: number) => start + Math.floor(Math.random() * size);
+      randint(0, 15) >= 1 ? self.scrollBy(0, randint(300, 300)) : scrollTo(0, 0);
       const imgUrls: string[] = Array.from(
-        document.querySelectorAll(
-          ".container-fluid.comicContent > div > ul > li > img"
-        )
+        document.querySelectorAll(".container-fluid.comicContent > div > ul > li > img"),
       ).map((e) => e.getAttribute("data-src")!);
       return imgUrls;
     }))!;
@@ -176,7 +163,7 @@ class CopyMangaWorker implements MangaWebPageWorker {
 }
 
 export default class WebsiteInjector {
-  private constructor() { }
+  private constructor() {}
 
   public static async inject(): Promise<{ mangaWorker?: MangaWebPageWorker }> {
     if (CopyMangaWorker.matchPattern.exec(self.location.href)) {

@@ -1,22 +1,19 @@
 /* eslint-disable no-console */
 import { createApp } from "vue";
-import App from "./views/App.vue";
-import WebsiteInjector from "./websiteInjector.mjs";
-import { MangaWebPageWorker } from "./manga";
+import App from "./views/MangaReader.vue";
+import WebsiteInjector from "./websiteInjector";
+import type { MangaWebPageWorker } from "./types";
 
-function mountMangaReader(mangaWorker: MangaWebPageWorker) {
+import "~/styles";
+
+function buildMangaVueApp(mangaWorker: MangaWebPageWorker) {
   const container = document.createElement("div");
   container.id = __NAME__;
   const root = document.createElement("div");
   const styleEl = document.createElement("link");
-  const shadowDOM =
-    container.attachShadow?.({ mode: __DEV__ ? "open" : "closed" }) ||
-    container;
+  const shadowDOM = container.attachShadow?.({ mode: __DEV__ ? "open" : "closed" }) || container;
   styleEl.setAttribute("rel", "stylesheet");
-  styleEl.setAttribute(
-    "href",
-    browser.runtime.getURL("dist/contentScripts/index.css")
-  );
+  styleEl.setAttribute("href", browser.runtime.getURL("dist/contentScripts/index.css"));
   shadowDOM.appendChild(styleEl);
   shadowDOM.appendChild(root);
   document.body.appendChild(container);
@@ -26,19 +23,36 @@ function mountMangaReader(mangaWorker: MangaWebPageWorker) {
   return { component, channel: component.channel };
 }
 
-// Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
-(() => {
-  // communication example: send previous tab title from background page
-  WebsiteInjector.inject().then(({ mangaWorker }) => {
-    const { channel, component } =
-      (mangaWorker && mountMangaReader(mangaWorker)) || {};
-    __DEV__ && Object.assign(self, {
+async function setup() {
+  const { mangaWorker } = await WebsiteInjector.inject();
+  const { channel, component } = (mangaWorker && buildMangaVueApp(mangaWorker)) || {};
+  __DEV__ &&
+    Object.assign(self, {
       channel,
       mangaWorker,
       mangaReader: component,
     });
-    if (mangaWorker && channel) {
-      mangaWorker.subscribeReaderChannel(channel);
-    }
-  });
-})();
+  if (mangaWorker && channel) {
+    mangaWorker.subscribeReaderChannel(channel);
+  }
+}
+
+void setup();
+
+// (() => {
+//   const container = document.createElement('div');
+//   container.id = __NAME__;
+//   const root = document.createElement('div');
+//   const styleEl = document.createElement('link');
+//   const shadowDOM = container.attachShadow?.({ mode: __DEV__ ? 'open' : 'closed' }) || container;
+//   styleEl.setAttribute('rel', 'stylesheet');
+//   styleEl.setAttribute('href', browser.runtime.getURL('dist/contentScripts/index.css'));
+//   shadowDOM.appendChild(styleEl);
+//   shadowDOM.appendChild(root);
+//   document.body.appendChild(container);
+
+//   const scriptEl = document.createElement('script');
+//   scriptEl.setAttribute('type', 'module');
+//   scriptEl.setAttribute('src', 'http://localhost:3303/contentScripts/main.ts'); // TODO: Adjust for production envirement
+//   shadowDOM.appendChild(scriptEl)
+// })();

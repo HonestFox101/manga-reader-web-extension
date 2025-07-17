@@ -1,37 +1,35 @@
-import { defineConfig } from 'vite'
-import { sharedConfig } from './vite-shared-config.mjs'
-import { isDev, r } from './scripts/utils'
-import packageJson from './package.json'
+import { defineConfig } from "vite";
+import { sharedConfig } from "./vite.config.shared.mjs";
+import { isDev, r } from "./scripts/utils.js";
+import packageJson from "./package.json" with { type: "json" };
 
 // bundling the content script using Vite
 export default defineConfig({
   ...sharedConfig,
   define: {
-    '__DEV__': isDev,
-    '__NAME__': JSON.stringify(packageJson.name),
+    __DEV__: isDev,
+    __NAME__: JSON.stringify(packageJson.name),
     // https://github.com/vitejs/vite/issues/9320
     // https://github.com/vitejs/vite/issues/9186
-    'process.env.NODE_ENV': JSON.stringify(isDev ? 'development' : 'production'),
+    "process.env.NODE_ENV": JSON.stringify(isDev ? "development" : "production"),
   },
   build: {
-    watch: isDev
-      ? {}
-      : undefined,
-    outDir: r('extension/dist/contentScripts'),
+    watch: isDev ? {} : undefined,
+    outDir: r("extension/dist/contentScripts"),
     cssCodeSplit: false,
     emptyOutDir: false,
-    sourcemap: isDev ? 'inline' : false,
+    sourcemap: isDev ? "inline" : false,
     lib: {
-      entry: r('src/contentScripts/index.ts'),
+      entry: r("src/contentScripts/index.ts"),
       name: packageJson.name,
-      formats: ['iife'],
-      cssFileName: 'index',
+      formats: ["iife"],
+      cssFileName: "index",
     },
     rollupOptions: {
       output: {
-        entryFileNames: 'index.global.js',
+        entryFileNames: "index.global.js",
         extend: true,
       },
     },
   },
-})
+});

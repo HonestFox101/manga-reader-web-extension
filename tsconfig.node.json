@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "useDefineForClassFields": true,
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "strict": true
+  },
+  "include": ["vite.config.*", "scripts/**/*"]
+}
