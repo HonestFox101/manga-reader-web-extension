@@ -10,7 +10,7 @@ import type {
 
 class CopyMangaWorker implements MangaWebPageWorker {
   public static readonly matchPattern =
-    /^https?:\/\/(copymanga\.tv|mangacopy\.com|copy-manga\.com|www\.copy20\.com|www.copy.com|www\.2025copy\.com)\/comic\/\w+\/chapter\/[\w-]+$/g;
+    /^https?:\/\/(copymanga\.tv|mangacopy\.com|copy-manga\.com|www\.copy20\.com|www\.copy\.com|(www\.)?2025copy\.com)\/comic\/\w+\/chapter\/[\w-]+$/g;
 
   public readonly pageCount: number;
   public readonly pages: Page[] = [];

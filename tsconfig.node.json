@@ -4,6 +4,7 @@
     "useDefineForClassFields": true,
     "module": "nodenext",
     "moduleResolution": "nodenext",
+    "resolveJsonModule": true,
     "strict": true
   },
   "include": ["vite.config.*", "scripts/**/*"]

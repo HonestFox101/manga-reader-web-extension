@@ -3,7 +3,7 @@ import { log, r, isDev, isFirefox, port } from "./utils";
 import type { Manifest } from "webextension-polyfill";
 import type PkgType from "../package.json";
 
-export async function getManifest() {
+async function getManifest() {
   const pkg = (await fs.readJSON(r("package.json"))) as typeof PkgType;
 
   // update this file to update this manifest.json
@@ -15,7 +15,7 @@ export async function getManifest() {
     version: pkg.version,
     description: pkg.description,
     action: {
-      default_icon: "./assets/icons8-manga-48.png",
+      default_icon: "./assets/simple-icons--mangaupdates.png",
       // default_popup: "./dist/popup/index.html",
     },
     // options_ui: {
@@ -31,8 +31,10 @@ export async function getManifest() {
           service_worker: "./dist/background/index.mjs",
         },
     icons: {
-      16: "./assets/icons8-manga-48.png",
-      48: "./assets/icons8-manga-48.png",
+      16: "./assets/simple-icons--mangaupdates.png",
+      48: "./assets/simple-icons--mangaupdates.png",
+      128: "./assets/simple-icons--mangaupdates.png",
+      256: "./assets/simple-icons--mangaupdates.png",
     },
     permissions: [
       "tabs",
