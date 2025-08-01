@@ -21,9 +21,9 @@
 ## 开发者信息
 
 * 作者：HonestFox101
-* 版本：0.9.0
+* 版本：1.0.0
 * 许可证：MIT License
 
 ## 源代码地址
 
-[https://github.com/honestfox101/manga-reader-web-extension](https://github.com/honestfox101/manga-reader-web-extension)
+[https://codeberg.org/honestfox101/manga-reader-web-extension](https://codeberg.org/honestfox101/manga-reader-web-extension)

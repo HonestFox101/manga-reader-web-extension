@@ -17,8 +17,8 @@ It overrides the original webpage to offer a more comfortable reading environmen
 
 ### Developer Information
 - Author: HonestFox101
-- Version: 0.9.0
+- Version: 1.0.0
 - License: MIT License
 
 ### Source Code
-https://github.com/honestfox101/manga-reader-web-extension
+https://codeberg.org/honestfox101/manga-reader-web-extension
