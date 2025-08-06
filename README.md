@@ -1,5 +1,3 @@
-# Edge拓展，日漫双页漫画阅读器
-
 ## 说明
 
 本浏览器扩展程序旨在为日漫爱好者提供更好的阅读体验。
@@ -20,10 +18,14 @@
 
 ## 开发者信息
 
-* 作者：HonestFox101
-* 版本：1.0.0
-* 许可证：MIT License
+- 作者：HonestFox101
+- 版本：1.0.1
+- 许可证：MIT License
+
+## 下载地址
+
+https://microsoftedge.microsoft.com/addons/detail/manga-reader/igneffgoigjplccbobhcnogdlbagnfkp
 
 ## 源代码地址
 
-[https://codeberg.org/honestfox101/manga-reader-web-extension](https://codeberg.org/honestfox101/manga-reader-web-extension)
+https://codeberg.org/honestfox101/manga-reader-web-extension

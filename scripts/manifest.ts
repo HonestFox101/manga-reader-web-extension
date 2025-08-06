@@ -2,6 +2,7 @@ import fs from "fs-extra";
 import { log, r, isDev, isFirefox, port } from "./utils";
 import type { Manifest } from "webextension-polyfill";
 import type PkgType from "../package.json";
+import { buildManifest, writeLocales } from "./i18n";
 
 async function getManifest() {
   const pkg = (await fs.readJSON(r("package.json"))) as typeof PkgType;
@@ -77,10 +78,12 @@ async function getManifest() {
   // }
   //#endregion
 
-  return manifest;
+  return buildManifest(manifest);
 }
 
 export async function writeManifest() {
+  writeLocales();
+
   await fs.writeJSON(r("extension/manifest.json"), await getManifest(), { spaces: 2 });
   log("PRE", "write manifest.json");
 }

@@ -2,8 +2,8 @@
   "name": "manga-reader",
   "displayName": "Manga Reader",
   "author": "HF101",
-  "description": "Specialized manga reader that helps enhance the manga reading experience.",
-  "version": "1.0.0",
+  "description": "Manga reader that helps enhance the manga reading experience.",
+  "version": "1.0.1",
   "private": true,
   "scripts": {
     "dev": "npm run clear && cross-env NODE_ENV=development run-p dev:*",
