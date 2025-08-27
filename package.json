@@ -22,38 +22,43 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@iconify/json": "^2.2.359",
+    "@iconify/json": "^2.2.378",
     "@types/archiver": "^6.0.3",
     "@types/fs-extra": "^11.0.4",
-    "@types/node": "^22.16.4",
+    "@types/node": "^22.18.0",
     "@types/webextension-polyfill": "^0.12.3",
-    "@vitejs/plugin-vue": "^6.0.0",
-    "@vueuse/core": "^13.5.0",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vueuse/core": "^13.8.0",
     "archiver": "^7.0.1",
     "chokidar": "^4.0.3",
     "cross-env": "^7.0.3",
     "emittery": "^1.2.0",
     "esno": "^4.8.0",
-    "fs-extra": "^11.3.0",
+    "fs-extra": "^11.3.1",
     "husky": "^9.1.7",
     "jsdom": "^26.1.0",
     "kolorist": "^1.8.0",
-    "lint-staged": "^16.1.2",
+    "lint-staged": "^16.1.5",
     "npm-run-all": "^4.1.5",
     "prettier": "3.6.2",
     "rimraf": "^6.0.1",
-    "sass-embedded": "^1.89.2",
-    "typescript": "^5.8.3",
+    "sass-embedded": "^1.91.0",
+    "typescript": "^5.9.2",
     "unplugin-auto-import": "^19.3.0",
-    "unplugin-icons": "^22.1.0",
+    "unplugin-icons": "^22.2.0",
     "unplugin-vue-components": "^28.8.0",
-    "vite": "^7.0.4",
-    "vue": "^3.5.17",
+    "vite": "npm:rolldown-vite@^7.1.5",
+    "vue": "^3.5.20",
     "vue-demi": "^0.14.10",
     "webext-bridge": "^6.0.1",
     "webextension-polyfill": "^0.12.0"
   },
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"
+  },
+  "pnpm": {
+    "overrides": {
+      "vite": "npm:rolldown-vite@latest"
+    }
   }
 }
