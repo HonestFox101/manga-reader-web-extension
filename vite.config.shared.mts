@@ -6,7 +6,7 @@ import IconsResolver from "unplugin-icons/resolver";
 import Components from "unplugin-vue-components/vite";
 import AutoImport from "unplugin-auto-import/vite";
 
-import { isDev, r } from "./scripts/utils.js";
+import { backgroundEntry, contentScriptEntry, isDev, r } from "./scripts/utils.js";
 import packageJson from "./package.json" with { type: "json" };
 
 export const sharedConfig: UserConfig = {
@@ -19,10 +19,14 @@ export const sharedConfig: UserConfig = {
   define: {
     __DEV__: isDev,
     __NAME__: JSON.stringify(packageJson.name),
+    __BACKGROUND_ENTRY__: backgroundEntry,
+    __CONTENT_SCRIPT_ENTRY__: contentScriptEntry,
+    // https://github.com/vitejs/vite/issues/9320
+    // https://github.com/vitejs/vite/issues/9186
+    "process.env.NODE_ENV": JSON.stringify(isDev ? "development" : "production"),
   },
   plugins: [
     Vue(),
-
     AutoImport({
       imports: [
         "vue",
@@ -44,7 +48,7 @@ export const sharedConfig: UserConfig = {
       resolvers: [
         // auto import icons
         IconsResolver({
-          prefix: "",
+          prefix: "i",
         }),
       ],
     }),
@@ -64,6 +68,5 @@ export const sharedConfig: UserConfig = {
   ],
   optimizeDeps: {
     include: ["vue", "@vueuse/core", "webextension-polyfill"],
-    exclude: ["vue-demi"],
   },
 };

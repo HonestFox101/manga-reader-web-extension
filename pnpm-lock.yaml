@@ -38,8 +38,8 @@ importers:
         specifier: ^4.0.3
         version: 4.0.3
       cross-env:
-        specifier: ^7.0.3
-        version: 7.0.3
+        specifier: ^10.0.0
+        version: 10.0.0
       emittery:
         specifier: ^1.2.0
         version: 1.2.0
@@ -77,23 +77,20 @@ importers:
         specifier: ^5.9.2
         version: 5.9.2
       unplugin-auto-import:
-        specifier: ^19.3.0
-        version: 19.3.0(@vueuse/core@13.8.0(vue@3.5.20(typescript@5.9.2)))
+        specifier: ^20.0.0
+        version: 20.0.0(@vueuse/core@13.8.0(vue@3.5.20(typescript@5.9.2)))
       unplugin-icons:
         specifier: ^22.2.0
         version: 22.2.0(@vue/compiler-sfc@3.5.20)
       unplugin-vue-components:
-        specifier: ^28.8.0
-        version: 28.8.0(@babel/parser@7.28.3)(vue@3.5.20(typescript@5.9.2))
+        specifier: ^29.0.0
+        version: 29.0.0(@babel/parser@7.28.3)(vue@3.5.20(typescript@5.9.2))
       vite:
         specifier: npm:rolldown-vite@latest
         version: rolldown-vite@7.1.5(@types/node@22.18.0)(esbuild@0.25.9)(sass-embedded@1.91.0)(sass@1.91.0)(tsx@4.20.5)(yaml@2.8.1)
       vue:
         specifier: ^3.5.20
         version: 3.5.20(typescript@5.9.2)
-      vue-demi:
-        specifier: ^0.14.10
-        version: 0.14.10(vue@3.5.20(typescript@5.9.2))
       webext-bridge:
         specifier: ^6.0.1
         version: 6.0.1
@@ -214,6 +211,12 @@ packages:
     resolution:
       {
         integrity: sha512-PJR+bOmMOPH8AtcTGAyYNiuJ3/Fcoj2XN/gBEWzDIKh254XO+mM9XoXHk5GNEhodxeMznbg7BlRojVbKN+gC6g==,
+      }
+
+  "@epic-web/invariant@1.0.0":
+    resolution:
+      {
+        integrity: sha512-lrTPqgvfFQtR/eY/qkIzp98OGdNJu0m5ji3q/nJI8v3SXkRKEnWiOxMmbvcSoAIzv/cGiuvRy57k4suKQSAdwA==,
       }
 
   "@esbuild/aix-ppc64@0.25.9":
@@ -1300,12 +1303,12 @@ packages:
       }
     engines: { node: ">= 14" }
 
-  cross-env@7.0.3:
+  cross-env@10.0.0:
     resolution:
       {
-        integrity: sha512-+/HKd6EgcQCJGh2PSjZuUitQBQynKor4wrFbRg4DtAgS1aWO+gU52xpH7M9ScGgXSYmAVS9bIJ8EzuaGw0oNAw==,
+        integrity: sha512-aU8qlEK/nHYtVuN4p7UQgAwVljzMg8hB4YK5ThRqD2l/ziSnryncPNn7bMLt5cFYsKVKBh8HqLqyCoTupEUu7Q==,
       }
-    engines: { node: ">=10.14", npm: ">=6", yarn: ">=1" }
+    engines: { node: ">=20" }
     hasBin: true
 
   cross-spawn@6.0.6:
@@ -3503,10 +3506,10 @@ packages:
         integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==,
       }
 
-  unimport@4.2.0:
+  unimport@5.2.0:
     resolution:
       {
-        integrity: sha512-mYVtA0nmzrysnYnyb3ALMbByJ+Maosee2+WyE0puXl+Xm2bUwPorPaaeZt0ETfuroPOtG8jj1g/qeFZ6buFnag==,
+        integrity: sha512-bTuAMMOOqIAyjV4i4UH7P07pO+EsVxmhOzQ2YJ290J6mkLUdozNhb5I/YoOEheeNADC03ent3Qj07X0fWfUpmw==,
       }
     engines: { node: ">=18.12.0" }
 
@@ -3517,14 +3520,14 @@ packages:
       }
     engines: { node: ">= 10.0.0" }
 
-  unplugin-auto-import@19.3.0:
+  unplugin-auto-import@20.0.0:
     resolution:
       {
-        integrity: sha512-iIi0u4Gq2uGkAOGqlPJOAMI8vocvjh1clGTfSK4SOrJKrt+tirrixo/FjgBwXQNNdS7ofcr7OxzmOb/RjWxeEQ==,
+        integrity: sha512-YAqD07gQa5PpGlhLFQ9rWDtGa42nBR2oNMudnX7G5P8XmkQx3EPL7sKNQroTdt5ehwks55NHy0dzxwwA3xtqQg==,
       }
     engines: { node: ">=14" }
     peerDependencies:
-      "@nuxt/kit": ^3.2.2
+      "@nuxt/kit": ^4.0.0
       "@vueuse/core": "*"
     peerDependenciesMeta:
       "@nuxt/kit":
@@ -3565,10 +3568,10 @@ packages:
       }
     engines: { node: ">=18.12.0" }
 
-  unplugin-vue-components@28.8.0:
+  unplugin-vue-components@29.0.0:
     resolution:
       {
-        integrity: sha512-2Q6ZongpoQzuXDK0ZsVzMoshH0MWZQ1pzVL538G7oIDKRTVzHjppBDS8aB99SADGHN3lpGU7frraCG6yWNoL5Q==,
+        integrity: sha512-M2DX44g4/jvBkB0V6uwqTbkTd5DMRHpeGoi/cIKwGG4HPuNxLbe8zoTStB2n12hoDiWc9I1PIRQruRWExNXHlQ==,
       }
     engines: { node: ">=14" }
     peerDependencies:
@@ -3605,20 +3608,6 @@ packages:
       {
         integrity: sha512-cXEIW6cfr15lFv563k4GuVuW/fiwjknytD37jIOLSdSWuOI6WnO/oKwmP2FQTU2l01LP8/M5TSAJpzUaGe3uWg==,
       }
-
-  vue-demi@0.14.10:
-    resolution:
-      {
-        integrity: sha512-nMZBOwuzabUO0nLgIcc6rycZEebF6eeUfaiQx9+WSk8e29IbLvPU9feI6tqW4kTo3hvoYAJkMh8n8D0fuISphg==,
-      }
-    engines: { node: ">=12" }
-    hasBin: true
-    peerDependencies:
-      "@vue/composition-api": ^1.0.0-rc.1
-      vue: ^3.0.0-0 || ^2.6.0
-    peerDependenciesMeta:
-      "@vue/composition-api":
-        optional: true
 
   vue@3.5.20:
     resolution:
@@ -3863,6 +3852,8 @@ snapshots:
     dependencies:
       tslib: 2.8.1
     optional: true
+
+  "@epic-web/invariant@1.0.0": {}
 
   "@esbuild/aix-ppc64@0.25.9":
     optional: true
@@ -4426,8 +4417,9 @@ snapshots:
       crc-32: 1.2.2
       readable-stream: 4.7.0
 
-  cross-env@7.0.3:
+  cross-env@10.0.0:
     dependencies:
+      "@epic-web/invariant": 1.0.0
       cross-spawn: 7.0.6
 
   cross-spawn@6.0.6:
@@ -5819,7 +5811,7 @@ snapshots:
 
   undici-types@6.21.0: {}
 
-  unimport@4.2.0:
+  unimport@5.2.0:
     dependencies:
       acorn: 8.15.0
       escape-string-regexp: 5.0.0
@@ -5838,12 +5830,12 @@ snapshots:
 
   universalify@2.0.1: {}
 
-  unplugin-auto-import@19.3.0(@vueuse/core@13.8.0(vue@3.5.20(typescript@5.9.2))):
+  unplugin-auto-import@20.0.0(@vueuse/core@13.8.0(vue@3.5.20(typescript@5.9.2))):
     dependencies:
       local-pkg: 1.1.2
       magic-string: 0.30.18
       picomatch: 4.0.3
-      unimport: 4.2.0
+      unimport: 5.2.0
       unplugin: 2.3.8
       unplugin-utils: 0.2.5
     optionalDependencies:
@@ -5866,7 +5858,7 @@ snapshots:
       pathe: 2.0.3
       picomatch: 4.0.3
 
-  unplugin-vue-components@28.8.0(@babel/parser@7.28.3)(vue@3.5.20(typescript@5.9.2)):
+  unplugin-vue-components@29.0.0(@babel/parser@7.28.3)(vue@3.5.20(typescript@5.9.2)):
     dependencies:
       chokidar: 3.6.0
       debug: 4.4.1
@@ -5897,10 +5889,6 @@ snapshots:
       spdx-expression-parse: 3.0.1
 
   varint@6.0.0: {}
-
-  vue-demi@0.14.10(vue@3.5.20(typescript@5.9.2)):
-    dependencies:
-      vue: 3.5.20(typescript@5.9.2)
 
   vue@3.5.20(typescript@5.9.2):
     dependencies:

@@ -1,21 +1,14 @@
 import { defineConfig } from "vite";
 import { sharedConfig } from "./vite.config.shared.mjs";
-import { isDev, r } from "./scripts/utils.js";
+import { backgroundEntry, isDev, r } from "./scripts/utils.js";
 import packageJson from "./package.json" with { type: "json" };
 
 // bundling the content script using Vite
 export default defineConfig({
   ...sharedConfig,
-  define: {
-    __DEV__: isDev,
-    __NAME__: JSON.stringify(packageJson.name),
-    // https://github.com/vitejs/vite/issues/9320
-    // https://github.com/vitejs/vite/issues/9186
-    "process.env.NODE_ENV": JSON.stringify(isDev ? "development" : "production"),
-  },
   build: {
     watch: isDev ? {} : undefined,
-    outDir: r("extension/dist/background"),
+    outDir: r("extension", backgroundEntry.split("/").slice(0, -1).join("/")),
     cssCodeSplit: false,
     emptyOutDir: false,
     sourcemap: isDev ? "inline" : false,
@@ -24,9 +17,9 @@ export default defineConfig({
       name: packageJson.name,
       formats: ["iife"],
     },
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        entryFileNames: "index.mjs",
+        entryFileNames: backgroundEntry.split("/").at(-1),
         extend: true,
       },
     },

@@ -50,15 +50,15 @@ export interface MangaWebPageWorker {
   /**
    * 跳转到下一话
    */
-  readonly goToNextEpisode: (() => Promise<void>) | null;
+  readonly goToNextEpisode?: () => Promise<void>;
   /**
    * 跳转到上一话
    */
-  readonly goToPrevEpisode: (() => Promise<void>) | null;
+  readonly goToPrevEpisode?: () => Promise<void>;
   /**
    * 跳转到目录页
    */
-  readonly goToCatalogPage: (() => Promise<void>) | null;
+  readonly goToCatalogPage?: () => Promise<void>;
 }
 
 export type MangaReaderEvent = {

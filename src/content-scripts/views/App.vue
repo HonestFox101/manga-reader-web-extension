@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import WebsiteInjector from "~/contentScripts/websiteInjector";
+import WebsiteInjectorFactory from "~/content-scripts/websiteInjector";
 import MangaReader from "./MangaReader.vue";
 import { MangaWebPageWorker } from "../types";
 
@@ -7,7 +7,7 @@ const mangaWorker = shallowRef<MangaWebPageWorker | undefined>(undefined);
 const mangaReader = useTemplateRef("manga-reader");
 
 onMounted(async () => {
-  mangaWorker.value = (await WebsiteInjector.inject()).mangaWorker;
+  mangaWorker.value = (await WebsiteInjectorFactory.setup()).mangaWorker;
   await nextTick();
   mangaWorker.value!.subscribeReaderChannel(mangaReader.value!.channel);
   __DEV__ &&

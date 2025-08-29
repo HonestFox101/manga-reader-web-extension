@@ -1,10 +1,10 @@
 /* eslint-disable no-console */
 import { createApp } from "vue";
 import App from "./views/MangaReader.vue";
-import WebsiteInjector from "./websiteInjector";
+import WebsiteInjectorFactory from "./websiteInjector";
 import type { MangaWebPageWorker } from "./types";
 
-import "~/styles";
+import "~/styles/main.scss";
 
 function buildMangaVueApp(mangaWorker: MangaWebPageWorker) {
   const container = document.createElement("div");
@@ -13,7 +13,7 @@ function buildMangaVueApp(mangaWorker: MangaWebPageWorker) {
   const styleEl = document.createElement("link");
   const shadowDOM = container.attachShadow?.({ mode: __DEV__ ? "open" : "closed" }) || container;
   styleEl.setAttribute("rel", "stylesheet");
-  styleEl.setAttribute("href", browser.runtime.getURL("dist/contentScripts/index.css"));
+  styleEl.setAttribute("href", browser.runtime.getURL("dist/content-scripts/index.css"));
   shadowDOM.appendChild(styleEl);
   shadowDOM.appendChild(root);
   document.body.appendChild(container);
@@ -24,7 +24,7 @@ function buildMangaVueApp(mangaWorker: MangaWebPageWorker) {
 }
 
 async function setup() {
-  const { mangaWorker } = await WebsiteInjector.inject();
+  const { mangaWorker } = await WebsiteInjectorFactory.setup();
   const { channel, component } = (mangaWorker && buildMangaVueApp(mangaWorker)) || {};
   __DEV__ &&
     Object.assign(self, {

@@ -5,16 +5,16 @@
   "description": "Manga reader that helps enhance the manga reading experience.",
   "version": "1.0.1",
   "private": true,
+  "license": "MIT",
   "scripts": {
-    "dev": "npm run clear && cross-env NODE_ENV=development run-p dev:*",
-    "dev-firefox": "npm run clear && cross-env NODE_ENV=development EXTENSION=firefox run-p dev:*",
+    "dev": "pnpm run clear && cross-env NODE_ENV=development run-p dev:*",
+    "dev-firefox": "pnpm run clear && cross-env NODE_ENV=development EXTENSION=firefox run-p dev:*",
     "dev:prepare": "esno scripts/prepare.ts",
-    "dev:background": "npm run build:background -- --mode development",
-    "dev:js": "npm run build:js -- --mode development",
+    "dev:background": "pnpm run build:background -- --mode development",
+    "dev:js": "pnpm run build:js -- --mode development",
     "build": "cross-env NODE_ENV=production run-s clear build:prepare build:background build:js",
     "build:prepare": "esno scripts/prepare.ts",
     "build:background": "vite build --config vite.config.background.mts",
-    "build:web": "vite build",
     "build:js": "vite build --config vite.config.content.mts",
     "pack": "cross-env NODE_ENV=production esno scripts/pack.ts",
     "clear": "rimraf --glob extension/dist extension/manifest.json extension.*",
@@ -31,7 +31,7 @@
     "@vueuse/core": "^13.8.0",
     "archiver": "^7.0.1",
     "chokidar": "^4.0.3",
-    "cross-env": "^7.0.3",
+    "cross-env": "^10.0.0",
     "emittery": "^1.2.0",
     "esno": "^4.8.0",
     "fs-extra": "^11.3.1",
@@ -44,12 +44,11 @@
     "rimraf": "^6.0.1",
     "sass-embedded": "^1.91.0",
     "typescript": "^5.9.2",
-    "unplugin-auto-import": "^19.3.0",
+    "unplugin-auto-import": "^20.0.0",
     "unplugin-icons": "^22.2.0",
-    "unplugin-vue-components": "^28.8.0",
+    "unplugin-vue-components": "^29.0.0",
     "vite": "npm:rolldown-vite@^7.1.5",
     "vue": "^3.5.20",
-    "vue-demi": "^0.14.10",
     "webext-bridge": "^6.0.1",
     "webextension-polyfill": "^0.12.0"
   },
@@ -59,6 +58,10 @@
   "pnpm": {
     "overrides": {
       "vite": "npm:rolldown-vite@latest"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "esbuild"
+    ]
   }
 }

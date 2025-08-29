@@ -12,33 +12,25 @@ class CopyMangaWorker implements MangaWebPageWorker {
   public static readonly matchPattern =
     /^https?:\/\/(copymanga\.tv|mangacopy\.com|copy-manga\.com|www\.copy20\.com|www\.copy\.com|(www\.)?2025copy\.com)\/comic\/\w+\/chapter\/[\w-]+$/g;
 
-  public readonly pageCount: number;
   public readonly pages: Page[] = [];
-  public readonly episodeName: string;
   public get loaded() {
-    return this.pages.length === this.pageCount;
+    return this.pages.length > 0 && this.pages.length === this.pageCount;
   }
   public get events() {
     return this._emitter;
   }
-  public readonly goToNextEpisode: (() => Promise<void>) | null;
-  public readonly goToPrevEpisode: (() => Promise<void>) | null;
-  public readonly goToCatalogPage: (() => Promise<void>) | null;
 
   private readonly _emitter = new Emittery<MangaWebPageWorkerEvent>();
 
   private constructor(
-    pageCount: number,
-    episodeName: string,
-    goToNextEpisode?: () => Promise<void>,
-    prevEpisodeSelector?: () => Promise<void>,
-    goToCatalogPage?: () => Promise<void>,
+    public readonly pageCount: number,
+    public readonly episodeName: string,
+    public readonly goToNextEpisode?: () => Promise<void>,
+    public readonly goToPrevEpisode?: () => Promise<void>,
+    public readonly prevEpisodeSelector?: () => Promise<void>,
+    public readonly goToCatalogPage?: () => Promise<void>,
   ) {
-    this.pageCount = pageCount;
-    this.episodeName = episodeName;
-    this.goToNextEpisode = goToNextEpisode || null;
-    this.goToPrevEpisode = prevEpisodeSelector || null;
-    this.goToCatalogPage = goToCatalogPage || null;
+    this.updatePage();
   }
 
   public async loadImage(pageIndex: number): Promise<Page> {
@@ -77,17 +69,14 @@ class CopyMangaWorker implements MangaWebPageWorker {
    * 类数据初始化，从DOM中获取信息
    */
   public static async build(): Promise<MangaWebPageWorker> {
-    const [total, episodeName] = (await exec(() => {
-      return [
-        parseInt(
-          document.querySelector<HTMLSpanElement>("body > div:nth-child(2) > span.comicCount")!
-            .innerText,
-        ) as number,
-        document
-          .querySelector<HTMLDivElement>("body > h4")!
-          .innerHTML.replace("/", " | ") as string,
-      ];
-    }))!;
+    const [total, episodeName] = (await exec(() => [
+      parseInt(
+        document.querySelector<HTMLSpanElement>("body > div:nth-child(2) > span.comicCount")!
+          .innerText,
+      ) as number,
+      document.querySelector<HTMLDivElement>("body > h4")!.innerHTML.replace("/", " | ") as string,
+    ]))!;
+    if (!total || !episodeName) throw new Error("Failed to init manga info");
     const goToNextEipisode = await CopyMangaWorker.buildJumpEpisodeFunc(
       "body > div.footer > div.comicContent-next > a",
     );
@@ -97,13 +86,13 @@ class CopyMangaWorker implements MangaWebPageWorker {
     const goToCatalogPage = await CopyMangaWorker.buildJumpEpisodeFunc(
       "body > div.footer > div.comicContent-prev.list > a",
     );
-    const initMeta = await new CopyMangaWorker(
+    const initMeta = new CopyMangaWorker(
       total,
       episodeName,
       goToNextEipisode,
       goToPrevEpisode,
       goToCatalogPage,
-    ).init();
+    );
     return initMeta as MangaWebPageWorker;
   }
 
@@ -126,14 +115,6 @@ class CopyMangaWorker implements MangaWebPageWorker {
       return func;
     }
     return undefined;
-  }
-
-  /**
-   * 初始化
-   */
-  public async init() {
-    this.updatePage();
-    return this;
   }
 
   /**
@@ -162,11 +143,9 @@ class CopyMangaWorker implements MangaWebPageWorker {
   }
 }
 
-export default class WebsiteInjector {
-  private constructor() {}
-
-  public static async inject(): Promise<{ mangaWorker?: MangaWebPageWorker }> {
-    if (CopyMangaWorker.matchPattern.exec(self.location.href)) {
+export default abstract class WebsiteInjectorFactory {
+  public static async setup(): Promise<{ mangaWorker?: MangaWebPageWorker }> {
+    if (CopyMangaWorker.matchPattern.test(self.location.href)) {
       const mangaWorker = await CopyMangaWorker.build();
       return { mangaWorker };
     }
