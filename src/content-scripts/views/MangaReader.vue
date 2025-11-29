@@ -265,6 +265,7 @@ $menu-bar-height: 75px;
     padding: 0;
     margin: 0;
     .page {
+      max-width: 50%;
       max-height: 100%;
       object-fit: scale-down;
       image-rendering: auto;
