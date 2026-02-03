@@ -3,9 +3,10 @@
   "displayName": "Manga Reader",
   "author": "HF101",
   "description": "Manga reader that helps enhance the manga reading experience.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "license": "MIT",
+  "packageManager": "pnpm@10.24.0+sha512.01ff8ae71b4419903b65c60fb2dc9d34cf8bb6e06d03bde112ef38f7a34d6904c424ba66bea5cdcf12890230bf39f9580473140ed9c946fef328b6e5238a345a",
   "scripts": {
     "dev": "pnpm run clear && cross-env NODE_ENV=development run-p dev:*",
     "dev-firefox": "pnpm run clear && cross-env NODE_ENV=development EXTENSION=firefox run-p dev:*",
@@ -49,6 +50,7 @@
     "unplugin-vue-components": "^29.0.0",
     "vite": "npm:rolldown-vite@^7.1.5",
     "vue": "^3.5.20",
+    "web-ext": "^9.2.0",
     "webext-bridge": "^6.0.1",
     "webextension-polyfill": "^0.12.0"
   },

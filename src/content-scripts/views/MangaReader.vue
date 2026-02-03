@@ -39,7 +39,8 @@ onMounted(async () => {
     baseKeyStrokeOption,
   );
   onKeyStroke([" "], (e) => (e.preventDefault(), toggleMenu()), baseKeyStrokeOption);
-  await jumpTo(0);
+
+  await jumpTo(0); // 加载第一页
   toggleShow(true);
 });
 
@@ -123,7 +124,7 @@ async function preloadImages(...indexes: number[]) {
  * 渲染漫画图片
  */
 async function renderImage(page: Page & { index: number }, element: HTMLImageElement) {
-  element.getAttribute("src") && URL.revokeObjectURL(element.src); // 清除图片缓存
+  element.hasAttribute("src") && URL.revokeObjectURL(element.src); // 清除图片缓存
   element.classList.remove(...Array.from(element.classList).filter((c) => c.startsWith("page-")));
   element.classList.add(`page-${page.index}`);
   return new Promise<void>((resolve) => {
@@ -138,7 +139,13 @@ async function renderImage(page: Page & { index: number }, element: HTMLImageEle
     <div class="manga-reader-container" :class="show ? '' : 'hidden'">
       <div class="background-panel layer"></div>
       <div class="display-panel layer">
-        <img v-for="(_, i) in currentPages" :key="i" :ref="pageRefs.set" class="page" />
+        <img
+          v-for="(_, i) in currentPages"
+          :key="i"
+          :style="{ maxWidth: currentPages.length > 1 ? '50%' : undefined }"
+          :ref="pageRefs.set"
+          class="page"
+        />
         <!-- <img class="page" src="/assets/template/1.webp" alt="" />
         <img class="page" src="/assets/template/2.webp" alt="" /> -->
       </div>
@@ -265,7 +272,6 @@ $menu-bar-height: 75px;
     padding: 0;
     margin: 0;
     .page {
-      max-width: 50%;
       max-height: 100%;
       object-fit: scale-down;
       image-rendering: auto;

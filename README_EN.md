@@ -8,6 +8,9 @@ It overrides the original webpage to offer a more comfortable reading environmen
 - Currently only supports CopyManga
 - Image preloading
 - Pagination fixes
+- Keyboard shortcuts (Arrow keys / A/D for navigation, Space for menu)
+- Dual-page mode (displays two pages side-by-side on wide screens)
+- Episode navigation (Previous/Next episode / Return to catalog)
 
 ## Usage
 
@@ -15,10 +18,16 @@ It overrides the original webpage to offer a more comfortable reading environmen
 2. Visit a supported manga website
 3. The reader UI will automatically load when accessing a manga page
 
+## Tech Stack
+
+- TypeScript + Vue 3
+- Vite + Sass
+- WebExtension API (Manifest V3)
+
 ## Developer Information
 
 - Author: HonestFox101
-- Version: 1.0.1
+- Version: 1.0.2
 - License: MIT License
 
 ## Download URL
