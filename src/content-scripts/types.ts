@@ -6,7 +6,7 @@ import Emittery from "emittery";
 export interface Page {
   url: string;
   size?: { width: number; height: number };
-  cachBlob?: Blob;
+  cacheBlob?: Blob;
 }
 
 export type MangaWebPageWorkerEvent = {

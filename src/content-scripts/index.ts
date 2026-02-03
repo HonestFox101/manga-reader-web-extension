@@ -1,12 +1,11 @@
 /* eslint-disable no-console */
 import { createApp } from "vue";
-import App from "./views/MangaReader.vue";
-import WebsiteInjectorFactory from "./websiteInjector";
-import type { MangaWebPageWorker } from "./types";
+import App from "./views/App.vue";
 
 import "~/styles/main.scss";
 
-function buildMangaVueApp(mangaWorker: MangaWebPageWorker) {
+// 脚本入口：仅负责创建 DOM 容器和挂载 Vue 应用
+function setup() {
   const container = document.createElement("div");
   container.id = __NAME__;
   const root = document.createElement("div");
@@ -18,23 +17,8 @@ function buildMangaVueApp(mangaWorker: MangaWebPageWorker) {
   shadowDOM.appendChild(root);
   document.body.appendChild(container);
 
-  const app = createApp(App, { mangaWorker });
-  const component = app.mount(root) as InstanceType<typeof App>;
-  return { component, channel: component.channel };
-}
-
-async function setup() {
-  const { mangaWorker } = await WebsiteInjectorFactory.setup();
-  const { channel, component } = (mangaWorker && buildMangaVueApp(mangaWorker)) || {};
-  __DEV__ &&
-    Object.assign(self, {
-      channel,
-      mangaWorker,
-      mangaReader: component,
-    });
-  if (mangaWorker && channel) {
-    mangaWorker.subscribeReaderChannel(channel);
-  }
+  const app = createApp(App);
+  app.mount(root);
 }
 
 void setup();

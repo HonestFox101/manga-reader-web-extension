@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onKeyStroke, useTemplateRefsList, useToggle } from "@vueuse/core";
+import { onUnmounted } from "vue";
 import type { MangaReaderChannel, MangaReaderEvent, MangaWebPageWorker, Page } from "../types";
 
 const loadingImageUrl = browser.runtime.getURL("/assets/loading.png");
@@ -14,18 +15,27 @@ const toggleShow = (value?: boolean) => {
   channel.emit("mangaReaderToggled", show.value);
 };
 
+// 扩展HTMLImageElement类型以支持保存ObjectURL引用
+interface ImageElement extends HTMLImageElement {
+  _currentBlobUrl?: string;
+}
+
+// 事件处理函数，用于清理
+const pageUpdatedHandler = async (pages: Page[]) => {
+  for (const element of pageRefs.value) {
+    if (element.getAttribute("src") && element.src === loadingImageUrl) {
+      const targetIndex = pages.findIndex((_, i) => element.classList.contains(`page-${i}`));
+      if (targetIndex !== -1) {
+        await renderImage({ ...pages[targetIndex], index: targetIndex }, element as ImageElement);
+      }
+    }
+  }
+};
+
 onMounted(async () => {
   // 监听漫画页更新事件，漫画图片替换加载图片
-  props.mangaWorker.events.on("pageUpdated", async (pages) =>
-    pageRefs.value.forEach(async (element) => {
-      if (element.getAttribute("src") && element.src === loadingImageUrl) {
-        const targetIndex = pages.findIndex((_, i) => element.classList.contains(`page-${i}`));
-        if (targetIndex !== -1) {
-          await renderImage({ ...pages[targetIndex], index: targetIndex }, element);
-        }
-      }
-    }),
-  );
+  props.mangaWorker.events.on("pageUpdated", pageUpdatedHandler);
+
   const baseKeyStrokeOption = { dedupe: true };
   // 监听键盘事件
   onKeyStroke(
@@ -42,6 +52,18 @@ onMounted(async () => {
 
   await jumpTo(0); // 加载第一页
   toggleShow(true);
+});
+
+// 组件卸载时清理事件监听器和ObjectURL
+onUnmounted(() => {
+  props.mangaWorker.events.off("pageUpdated", pageUpdatedHandler);
+
+  // 清理所有ObjectURL
+  for (const element of pageRefs.value) {
+    if ((element as ImageElement)._currentBlobUrl) {
+      URL.revokeObjectURL((element as ImageElement)._currentBlobUrl!);
+    }
+  }
 });
 
 const channel: MangaReaderChannel = new Emittery<MangaReaderEvent>();
@@ -108,28 +130,41 @@ async function jumpTo(index: number | "next" | "prev" | "fix") {
 }
 
 /**
- * 预加载图片
+ * 预加载图片 - 使用并行加载优化
  */
 async function preloadImages(...indexes: number[]) {
   indexes = indexes.filter(
-    (i) => i >= 0 && i < props.mangaWorker.pages.length && !props.mangaWorker.pages[i].cachBlob,
+    (i) => i >= 0 && i < props.mangaWorker.pages.length && !props.mangaWorker.pages[i].cacheBlob,
   );
-  for (const i of indexes) {
-    await props.mangaWorker.loadImage(i);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  }
+
+  if (indexes.length === 0) return;
+
+  // 使用Promise.all并行加载
+  await Promise.all(indexes.map((i) => props.mangaWorker.loadImage(i)));
 }
 
 /**
- * 渲染漫画图片
+ * 渲染漫画图片 - 优化ObjectURL内存管理
  */
-async function renderImage(page: Page & { index: number }, element: HTMLImageElement) {
-  element.hasAttribute("src") && URL.revokeObjectURL(element.src); // 清除图片缓存
+async function renderImage(page: Page & { index: number }, element: ImageElement) {
+  // 释放之前的ObjectURL
+  if (element._currentBlobUrl) {
+    URL.revokeObjectURL(element._currentBlobUrl);
+    element._currentBlobUrl = undefined;
+  }
+
   element.classList.remove(...Array.from(element.classList).filter((c) => c.startsWith("page-")));
   element.classList.add(`page-${page.index}`);
+
   return new Promise<void>((resolve) => {
     element.onload = () => resolve();
-    element.src = page.cachBlob ? URL.createObjectURL(page.cachBlob) : page.url;
+
+    if (page.cacheBlob) {
+      element._currentBlobUrl = URL.createObjectURL(page.cacheBlob);
+      element.src = element._currentBlobUrl;
+    } else {
+      element.src = page.url;
+    }
   });
 }
 </script>
