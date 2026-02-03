@@ -3,7 +3,15 @@ import { onKeyStroke, useTemplateRefsList, useToggle } from "@vueuse/core";
 import { onUnmounted } from "vue";
 import type { MangaReaderChannel, MangaReaderEvent, MangaWebPageWorker, Page } from "../types";
 
+// 常量定义
+const PRELOAD_COUNT = 5; // 预加载图片数量
 const loadingImageUrl = browser.runtime.getURL("/assets/loading.png");
+
+// 扩展HTMLImageElement类型以支持保存ObjectURL引用
+interface ImageElement extends HTMLImageElement {}
+
+// ObjectURL缓存 Map
+const imageBlobUrlMap = new Map<HTMLImageElement, string>();
 
 const props = defineProps<{
   mangaWorker: MangaWebPageWorker;
@@ -15,12 +23,6 @@ const toggleShow = (value?: boolean) => {
   channel.emit("mangaReaderToggled", show.value);
 };
 
-// 扩展HTMLImageElement类型以支持保存ObjectURL引用
-interface ImageElement extends HTMLImageElement {
-  _currentBlobUrl?: string;
-}
-
-// 事件处理函数，用于清理
 const pageUpdatedHandler = async (pages: Page[]) => {
   for (const element of pageRefs.value) {
     if (element.getAttribute("src") && element.src === loadingImageUrl) {
@@ -32,9 +34,22 @@ const pageUpdatedHandler = async (pages: Page[]) => {
   }
 };
 
+const channel: MangaReaderChannel = new Emittery<MangaReaderEvent>();
+
 onMounted(async () => {
+  // 创建漫画页渲染通道
+  const { mangaWorker } = props;
+  mangaWorker.subscribeReaderChannel(channel);
+
+  // 开发模式下暴露到全局
+  __DEV__ &&
+    Object.assign(self, {
+      channel,
+      mangaWorker,
+    });
+
   // 监听漫画页更新事件，漫画图片替换加载图片
-  props.mangaWorker.events.on("pageUpdated", pageUpdatedHandler);
+  mangaWorker.events.on("pageUpdated", pageUpdatedHandler);
 
   const baseKeyStrokeOption = { dedupe: true };
   // 监听键盘事件
@@ -58,41 +73,46 @@ onMounted(async () => {
 onUnmounted(() => {
   props.mangaWorker.events.off("pageUpdated", pageUpdatedHandler);
 
-  // 清理所有ObjectURL
-  for (const element of pageRefs.value) {
-    if ((element as ImageElement)._currentBlobUrl) {
-      URL.revokeObjectURL((element as ImageElement)._currentBlobUrl!);
-    }
+  // 清理所有 ObjectURL
+  for (const url of imageBlobUrlMap.values()) {
+    URL.revokeObjectURL(url);
   }
+  imageBlobUrlMap.clear();
 });
-
-const channel: MangaReaderChannel = new Emittery<MangaReaderEvent>();
 
 const currentPageIndex = ref<number | [number, number]>(0);
 
 const pageRefs = useTemplateRefsList<HTMLImageElement>();
 
+// 计算当前需要显示的页面数据
 const currentPages = computed(() => {
   const indexes = Array.isArray(currentPageIndex.value)
     ? currentPageIndex.value
     : [currentPageIndex.value];
-  const pages: (Page & { index: number })[] = indexes.map((i) => {
+  return indexes.map((i) => {
     const pages = props.mangaWorker.pages;
     if (i >= pages.length) {
-      return { url: loadingImageUrl };
+      return { url: loadingImageUrl, index: i };
     }
-    return { ...pages[i], index: i } as any;
+    return { ...pages[i], index: i };
   });
-  // 等待下一次渲染周期，同步更新<img>元素
-  nextTick().then(() => {
+});
+
+// 监听页面变化，渲染图片
+watch(
+  currentPages,
+  async (pages) => {
+    await nextTick();
     for (let i = 0; i < pageRefs.value.length; i++) {
       const page = pages[i];
       const element = pageRefs.value[i];
-      renderImage(page, element);
+      if (page && element) {
+        await renderImage(page as Page & { index: number }, element as ImageElement);
+      }
     }
-  });
-  return pages;
-});
+  },
+  { immediate: true },
+);
 
 const [showMenu, toggleMenu] = useToggle(false);
 
@@ -126,7 +146,7 @@ async function jumpTo(index: number | "next" | "prev" | "fix") {
     currentPageIndex.value = index;
   }
   channel.emit("jump", currentPageIndex.value);
-  preloadImages(...Array.from({ length: 5 }, (_, i) => i + index)); // 根据跳转到的页面预加载图片
+  preloadImages(...Array.from({ length: PRELOAD_COUNT }, (_, i) => i + index)); // 根据跳转到的页面预加载图片
 }
 
 /**
@@ -147,10 +167,11 @@ async function preloadImages(...indexes: number[]) {
  * 渲染漫画图片 - 优化ObjectURL内存管理
  */
 async function renderImage(page: Page & { index: number }, element: ImageElement) {
-  // 释放之前的ObjectURL
-  if (element._currentBlobUrl) {
-    URL.revokeObjectURL(element._currentBlobUrl);
-    element._currentBlobUrl = undefined;
+  // 清理旧的 ObjectURL
+  const oldUrl = imageBlobUrlMap.get(element);
+  if (oldUrl) {
+    URL.revokeObjectURL(oldUrl);
+    imageBlobUrlMap.delete(element);
   }
 
   element.classList.remove(...Array.from(element.classList).filter((c) => c.startsWith("page-")));
@@ -160,8 +181,9 @@ async function renderImage(page: Page & { index: number }, element: ImageElement
     element.onload = () => resolve();
 
     if (page.cacheBlob) {
-      element._currentBlobUrl = URL.createObjectURL(page.cacheBlob);
-      element.src = element._currentBlobUrl;
+      const blobUrl = URL.createObjectURL(page.cacheBlob);
+      imageBlobUrlMap.set(element, blobUrl);
+      element.src = blobUrl;
     } else {
       element.src = page.url;
     }
@@ -197,7 +219,7 @@ async function renderImage(page: Page & { index: number }, element: ImageElement
           <span
             class="change-episode-button action-button"
             :class="mangaWorker.goToNextEpisode ? '' : 'disable'"
-            @click="mangaWorker.goToNextEpisode && mangaWorker.goToNextEpisode()"
+            @click="mangaWorker.goToNextEpisode?.()"
             title="下一话"
           >
             <i-uil-arrow-left class="action-icon" />
@@ -216,17 +238,13 @@ async function renderImage(page: Page & { index: number }, element: ImageElement
                 : `${mangaWorker.pages.length}(${mangaWorker.pageCount})`
             }}
           </span>
-          <span
-            class="action-button"
-            @click="mangaWorker.goToCatalogPage && mangaWorker.goToCatalogPage()"
-            title="返回目录"
-          >
+          <span class="action-button" @click="mangaWorker.goToCatalogPage?.()" title="返回目录">
             <i-carbon-catalog class="action-icon" />
           </span>
           <span
             class="change-episode-button action-button"
             :class="mangaWorker.goToPrevEpisode ? '' : 'disable'"
-            @click="mangaWorker.goToPrevEpisode && mangaWorker.goToPrevEpisode()"
+            @click="mangaWorker.goToPrevEpisode?.()"
             title="上一话"
           >
             <i-uil-arrow-right class="action-icon" />

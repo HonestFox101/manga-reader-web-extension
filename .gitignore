@@ -17,5 +17,9 @@ src/auto-imports.d.ts
 src/components.d.ts
 .eslintcache
 
+# VS Code
 .vscode/**/*
 !.vscode/settings.json
+
+# AI
+.ai-docs
