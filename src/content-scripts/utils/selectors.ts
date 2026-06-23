@@ -36,7 +36,7 @@ export interface MangaSiteConfig {
 export const mangaSites: Record<string, MangaSiteConfig> = {
   copyManga: {
     matchPattern:
-      /^https?:\/\/(copymanga\.tv|mangacopy\.com|copy-manga\.com|www\.copy20\.com|www\.copy\.com|(www\.)?202[56]copy\.com)\/comic\/\w+\/chapter\/[\w-]+$/g,
+      /^https?:\/\/(www\.copy3000\.com|copymanga\.tv|mangacopy\.com|copy-manga\.com|www\.copy20\.com|www\.copy\.com|(www\.)?202[56]copy\.com)\/comic\/\w+\/chapter\/[\w-]+$/g,
     selectors: copyMangaSelectors,
   },
 } as const;
